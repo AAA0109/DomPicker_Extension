@@ -12,6 +12,7 @@ export const toggle = global => {
   const action = state ? "addEventListener" : "removeEventListener";
   document[action]("mouseover", global.selectElement);
   document[action]("mouseout", global.clearElDebounce);
+  document[action]("click", global.copyToClipboard)
 
   if (!state) {
     clearEl(global.selectedEl);
@@ -57,6 +58,7 @@ export const init = global => {
     global.copiedEl && global.copiedEl.classList.remove("gs_copied");
     clearEl(selectedEl);
     const selector = finder(selectedEl);
+    global.aaa = selectedEl
     console.log("[GetSelector]: Copied to Clipboard: " + selector, selectedEl);
     copyToClipboard(selector);
 

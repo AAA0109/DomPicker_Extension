@@ -1083,6 +1083,7 @@ const toggle = global => {
   const action = state ? "addEventListener" : "removeEventListener";
   document[action]("mouseover", global.selectElement);
   document[action]("mouseout", global.clearElDebounce);
+  document[action]("click", global.copyToClipboard);
 
   if (!state) {
     clearEl(global.selectedEl);

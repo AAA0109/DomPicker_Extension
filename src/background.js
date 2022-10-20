@@ -20,7 +20,10 @@ const updateIcon = isPressed =>
   });
 
 !(() => {
-  const MENU_ID = "GETSELECTOR";
+  const MENU_ID = "DOMPICKER";
+
+  let isMenuAdded = false;
+  let selectedTabId = null;
 
   const toggle = async () => {
     const state = await getState(selectedTabId);
@@ -29,7 +32,7 @@ const updateIcon = isPressed =>
     if (state) {
       chrome.contextMenus.create({
         id: MENU_ID,
-        title: "Copy Unique Selector to Clipboard",
+        title: "DOM Picker",
         contexts: ["all"],
         documentUrlPatterns: ["*://*/*"],
         onclick: e => {
@@ -44,9 +47,6 @@ const updateIcon = isPressed =>
       chrome.contextMenus.remove(MENU_ID);
     }
   }  
-
-  let isMenuAdded = false;
-  let selectedTabId = null;
 
   chrome.browserAction.onClicked.addListener(tab => {
     chrome.tabs.executeScript(
