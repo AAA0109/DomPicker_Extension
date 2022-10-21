@@ -4,7 +4,7 @@ import { addStyle } from "./addStyle";
 import { initMessage, showMessage, hideMessage } from "./info";
 import { copyToClipboard } from "./clipboard";
 
-const API_URL = 'http://127.0.0.1/api/v1/'
+const API_URL = 'https://ollacart.herokuapp.com/api/'
 const clearEl = el => el && el.classList.remove("gs_hover");
 
 export const toggle = global => {
@@ -14,8 +14,6 @@ export const toggle = global => {
   document[action]("mouseover", global.selectElement);
   document[action]("mouseout", global.clearElDebounce);
   document[action]("mousedown", global.copyToClipboard);
-  document[action]("pointerdown", global.copyToClipboard);
-  document[action]("click", global.copyToClipboard);
 
   if (!state) {
     clearEl(global.selectedEl);
@@ -65,15 +63,58 @@ export const init = global => {
     }
     global.copiedEl && global.copiedEl.classList.remove("gs_copied");
     clearEl(selectedEl);
-    const selector = finder(selectedEl);
-    window.aaa = selectedEl
-    console.log("[GetSelector]: Copied to Clipboard: ");
-    copyToClipboard(selector);
 
+    const imgTag = global.getImageTag(selectedEl);
+    if (!imgTag) return ;
+    console.log(imgTag, imgTag.src)
+    // const imgData = global.getBase64Image(imgTag);
+    // console.log("[DOM Picker]", imgData);
+    
+
+    fetch(API_URL + 'extension/create', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ photo: imgTag.src })
+    });
 
     global.copiedEl = selectedEl;
     global.copiedEl.classList.add("gs_copied");
   };
+
+  global.getImageTag = (tag) => {
+    if (!tag) return ;
+    if (tag.tagName === 'img') return tag;
+    const imgs = tag.getElementsByTagName('img')
+    if (!imgs.length) return;
+    return imgs[0];
+  }
+
+  global.getBase64Image = (img) => {
+    debugger
+    // Create an empty canvas element
+    img.setAttribute('crossorigin', 'annoymous');
+    var canvas = document.createElement("canvas");
+    canvas.width = img.width;
+    canvas.height = img.height;
+
+    // Copy the image contents to the canvas
+    var ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0);
+
+    // Get the data-URL formatted image
+    // Firefox supports PNG and JPEG. You could check img.src to guess the
+    // original format, but be aware the using "image/jpg" will re-encode the image.
+    var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    var dataURL = canvas.toDataURL('image/png');
+
+    img.removeAttribute('crossorigin');
+
+    return dataURL;
+    // return dataURL.replace(/^data:image\/(png|jpg);base64,/, "");
+  }
 
   addStyle(`
     .gs_hover {

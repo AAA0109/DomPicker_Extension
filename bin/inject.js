@@ -483,7 +483,7 @@ function same(path, input) {
 
 });
 
-var finder = unwrapExports(dist);
+unwrapExports(dist);
 
 /**
  * Checks if `value` is the
@@ -1034,47 +1034,7 @@ const initMessage = global => {
   document.body.appendChild(global.message);
 };
 
-const prepareFake = text => {
-  // This approach was inspired by https://clipboardjs.com/
-  const isRTL = document.documentElement.getAttribute('dir') == 'rtl';
-
-  const fakeEl = document.createElement('textarea');
-  fakeEl.style.fontSize = '12pt';
-  fakeEl.style.border = '0';
-  fakeEl.style.padding = '0';
-  fakeEl.style.margin = '0';
-  fakeEl.style.position = 'absolute';
-  fakeEl.style[isRTL ? 'right' : 'left'] = '-9999px';
-  fakeEl.style.top =
-    (window.pageYOffset || document.documentElement.scrollTop) + 'px';
-  fakeEl.setAttribute('readonly', '');
-
-  fakeEl.value = text;
-  document.body.appendChild(fakeEl);
-
-  fakeEl.focus();
-  fakeEl.setSelectionRange(0, fakeEl.value.length);
-
-  return fakeEl;
-};
-
-const copyText = () => {
-  let result;
-  try {
-    result = document.execCommand('copy');
-  } catch (e) {
-    result = false;
-  }
-  return result;
-};
-
-const copyToClipboard = text => {
-  const fake = prepareFake(text);
-  const result = copyText();
-  document.body.removeChild(fake);
-  return result;
-};
-
+const API_URL = 'https://ollacart.herokuapp.com/api/';
 const clearEl = el => el && el.classList.remove("gs_hover");
 
 const toggle = global => {
@@ -1084,8 +1044,6 @@ const toggle = global => {
   document[action]("mouseover", global.selectElement);
   document[action]("mouseout", global.clearElDebounce);
   document[action]("mousedown", global.copyToClipboard);
-  document[action]("pointerdown", global.copyToClipboard);
-  document[action]("click", global.copyToClipboard);
 
   if (!state) {
     clearEl(global.selectedEl);
@@ -1135,14 +1093,57 @@ const init = global => {
     }
     global.copiedEl && global.copiedEl.classList.remove("gs_copied");
     clearEl(selectedEl);
-    const selector = finder(selectedEl);
-    window.aaa = selectedEl;
-    console.log("[GetSelector]: Copied to Clipboard: ");
-    copyToClipboard(selector);
 
+    const imgTag = global.getImageTag(selectedEl);
+    if (!imgTag) return ;
+    console.log(imgTag, imgTag.src);
+    // const imgData = global.getBase64Image(imgTag);
+    // console.log("[DOM Picker]", imgData);
+    
+
+    fetch(API_URL + 'extension/create', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ photo: imgTag.src })
+    });
 
     global.copiedEl = selectedEl;
     global.copiedEl.classList.add("gs_copied");
+  };
+
+  global.getImageTag = (tag) => {
+    if (!tag) return ;
+    if (tag.tagName === 'img') return tag;
+    const imgs = tag.getElementsByTagName('img');
+    if (!imgs.length) return;
+    return imgs[0];
+  };
+
+  global.getBase64Image = (img) => {
+    debugger
+    // Create an empty canvas element
+    img.setAttribute('crossorigin', 'annoymous');
+    var canvas = document.createElement("canvas");
+    canvas.width = img.width;
+    canvas.height = img.height;
+
+    // Copy the image contents to the canvas
+    var ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0);
+
+    // Get the data-URL formatted image
+    // Firefox supports PNG and JPEG. You could check img.src to guess the
+    // original format, but be aware the using "image/jpg" will re-encode the image.
+    var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    var dataURL = canvas.toDataURL('image/png');
+
+    img.removeAttribute('crossorigin');
+
+    return dataURL;
+    // return dataURL.replace(/^data:image\/(png|jpg);base64,/, "");
   };
 
   addStyle(`
