@@ -1096,7 +1096,6 @@ const init = global => {
 
     const imgTag = global.getImageTag(selectedEl);
     if (!imgTag) return ;
-    console.log(imgTag, imgTag.src);
     // const imgData = global.getBase64Image(imgTag);
     // console.log("[DOM Picker]", imgData);
     
@@ -1107,7 +1106,7 @@ const init = global => {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ photo: imgTag.src })
+      body: JSON.stringify({ photo: imgTag.src, url: location.href })
     });
 
     global.copiedEl = selectedEl;
