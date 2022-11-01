@@ -1,8 +1,6 @@
-import finder from "@medv/finder";
 import debounce from "lodash/debounce";
 import { addStyle } from "./addStyle";
 import { initMessage, showMessage, hideMessage } from "./info";
-import { copyToClipboard } from "./clipboard";
 
 const API_URL = 'https://ollacart.herokuapp.com/api/'
 const clearEl = el => el && el.classList.remove("gs_hover");
@@ -13,7 +11,7 @@ export const toggle = global => {
   const action = state ? "addEventListener" : "removeEventListener";
   document[action]("mouseover", global.selectElement);
   document[action]("mouseout", global.clearElDebounce);
-  document[action]("mousedown", global.copyToClipboard);
+  document[action]("mousedown", global.domPick);
 
   if (!state) {
     clearEl(global.selectedEl);
@@ -51,7 +49,7 @@ export const init = global => {
     showMessage(global, message);
   }, 200);
 
-  global.copyToClipboard = (e) => {
+  global.domPick = (e) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();

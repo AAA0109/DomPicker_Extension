@@ -9,9 +9,9 @@ const getState = tabId =>
     );
   });
 
-const copySelector = tabId =>
+const domPicker = tabId =>
   chrome.tabs.executeScript(tabId, {
-    code: "window.__gs && window.__gs.copyToClipboard()"
+    code: "window.__gs && window.__gs.domPick()"
   });
 
 const updateIcon = isPressed =>
@@ -20,32 +20,32 @@ const updateIcon = isPressed =>
   });
 
 !(() => {
-  const MENU_ID = "DOMPICKER";
+  // const MENU_ID = "DOMPICKER";
 
-  let isMenuAdded = false;
+  // let isMenuAdded = false;
   let selectedTabId = null;
 
   const toggle = async () => {
     const state = await getState(selectedTabId);
     updateIcon(state);
   
-    if (state) {
-      chrome.contextMenus.create({
-        id: MENU_ID,
-        title: "DOM Picker",
-        contexts: ["all"],
-        documentUrlPatterns: ["*://*/*"],
-        onclick: e => {
-          if (e.menuItemId !== MENU_ID) {
-            return;
-          }
-          copySelector(selectedTabId);
-        }
-      }); 
-      isMenuAdded = true; 
-    } else if (isMenuAdded) {
-      chrome.contextMenus.remove(MENU_ID);
-    }
+    // if (state) {
+    //   chrome.contextMenus.create({
+    //     id: MENU_ID,
+    //     title: "DOM Picker",
+    //     contexts: ["all"],
+    //     documentUrlPatterns: ["*://*/*"],
+    //     onclick: e => {
+    //       if (e.menuItemId !== MENU_ID) {
+    //         return;
+    //       }
+    //       domPicker(selectedTabId);
+    //     }
+    //   }); 
+    //   isMenuAdded = true; 
+    // } else if (isMenuAdded) {
+    //   chrome.contextMenus.remove(MENU_ID);
+    // }
   }  
 
   chrome.browserAction.onClicked.addListener(tab => {
