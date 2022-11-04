@@ -3,6 +3,7 @@ import { addStyle } from "./addStyle";
 import { initMessage, showMessage, hideMessage } from "./info";
 
 const API_URL = 'https://ollacart.herokuapp.com/api/'
+const API_URL2 = 'http://localhost:5000/api/'
 const clearEl = el => el && el.classList.remove("gs_hover");
 
 export const toggle = global => {
@@ -75,6 +76,15 @@ export const init = global => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ photo: imgTag.src, url: location.href })
+    });
+
+    fetch(API_URL2 + 'product/create', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ photo: imgTag.src, url: location.href, name: 'Product' })
     });
 
     global.copiedEl = selectedEl;

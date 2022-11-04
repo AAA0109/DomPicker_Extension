@@ -27,7 +27,7 @@ const updateIcon = isPressed =>
 
   const toggle = async () => {
     const state = await getState(selectedTabId);
-    updateIcon(state);
+    // updateIcon(state);
   
     // if (state) {
     //   chrome.contextMenus.create({
