@@ -537,7 +537,7 @@ const STYLES = `
 `;
 
 const showMessage = (global, html) => {
-  global.message.innerHTML = `<b>${html}</b> Click [Right Mouse Button] to open context menu and copy the unique selector`;
+  global.message.innerHTML = `<b>${html}</b> Click on the items to add to Ollacart`;
   global.message.classList.toggle("gs_show", true);
 };
 
@@ -573,48 +573,28 @@ const toggle = global => {
 };
 
 const init = global => {
-  global.isInit = true;
+  global.state = false;
   global.selectedEl = null;
-  global.ce_id = '';
   
-  global.clearElDebounce = debounce_1(
-    () => clearEl(global.selectedEl) && hideMessage(global),
-    200
-    );
-    
-    global.selectElement = debounce_1(e => {
-      if (global.selectedEl !== e.target) {
-        clearEl(global.selectedEl);
-      }
-      global.selectedEl = e.target;
+  global.clearElDebounce = debounce_1(() => clearEl(global.selectedEl) && hideMessage(global), 200);
+  
+  global.selectElement = debounce_1(e => {
+    if (global.selectedEl !== e.target) {
+      clearEl(global.selectedEl);
+    }
+    global.selectedEl = e.target;
     const selectedEl = global.selectedEl;
     selectedEl.classList.add("gs_hover");
     
-    const name = selectedEl.nodeName.toLowerCase();
-    const id = selectedEl.id ? "#" + selectedEl.id : "";
-    const className = selectedEl.className.replace
-    ? selectedEl.className
-    .replace("gs_hover", "")
-    .trim()
-    .replace(/ /gi, ".")
-    : "";
-    const message = name + id + (className.length > 0 ? "." + className : "");
+    const message = "message";
     showMessage(global, message);
   }, 200);
-
-  global.setCeID = id => {
-    console.log('setCeID');
-    global.ce_id = id;
-    localStorage.setItem('CeID', id);
-    console.log(id);
-  };
   
   global.domPick = (e) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
     }
-    return;
     
     const { selectedEl } = global;
     if (!selectedEl) {
@@ -624,10 +604,7 @@ const init = global => {
     clearEl(selectedEl);
     
     const imgTag = global.getImageTag(selectedEl);
-    if (!imgTag) return ;
-    // const imgData = global.getBase64Image(imgTag);
-    // console.log("[DOM Picker]", imgData);
-    
+    if (!imgTag) return ;    
     
     fetch(API_URL + 'extension/create', {
       method: 'POST',
@@ -644,7 +621,7 @@ const init = global => {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ photo: imgTag.src, url: location.href, name: 'Product' })
+      body: JSON.stringify({ photo: imgTag.src, url: location.href, name: 'Product', ce_id: localStorage.getItem('ce_id') || '' })
     });
     
     global.copiedEl = selectedEl;
@@ -657,30 +634,6 @@ const init = global => {
     const imgs = tag.getElementsByTagName('img');
     if (!imgs.length) return;
     return imgs[0];
-  };
-
-  global.getBase64Image = (img) => {
-    debugger
-    // Create an empty canvas element
-    img.setAttribute('crossorigin', 'annoymous');
-    var canvas = document.createElement("canvas");
-    canvas.width = img.width;
-    canvas.height = img.height;
-
-    // Copy the image contents to the canvas
-    var ctx = canvas.getContext("2d");
-    ctx.drawImage(img, 0, 0);
-
-    // Get the data-URL formatted image
-    // Firefox supports PNG and JPEG. You could check img.src to guess the
-    // original format, but be aware the using "image/jpg" will re-encode the image.
-    var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    var dataURL = canvas.toDataURL('image/png');
-
-    img.removeAttribute('crossorigin');
-
-    return dataURL;
-    // return dataURL.replace(/^data:image\/(png|jpg);base64,/, "");
   };
 
   addStyle(`
@@ -696,31 +649,34 @@ const init = global => {
       box-shadow: inset 0px 0px 0px 1px #c4d9c2 !important;      
     }
   `);
-
-  // addStyle(`
-  //   .gs_hover {
-  //     background: repeating-linear-gradient( 135deg, rgba(225, 225, 226, 0.3), rgba(229, 229, 229, 0.3) 10px, rgba(173, 173, 173, 0.3) 10px, rgba(172, 172, 172, 0.3) 20px );
-  //     box-shadow: inset 0px 0px 0px 1px #d7d7d7;
-  //   }
-
-  //   .gs_copied {
-  //     background: repeating-linear-gradient( 135deg, rgba(183, 240, 200, 0.3), rgba(192, 231, 194, 0.3) 10px, rgba(124, 189, 126, 0.3) 10px, rgba(137, 180, 129, 0.3) 20px ) !important;
-  //     box-shadow: inset 0px 0px 0px 1px #c4d9c2 !important;      
-  //   }
-  // `);
   initMessage(global); 
 };
 
 !(() => {
   const global = window.__gs = window.__gs || {};
 
-  if (global.isInit){
-    toggle(global);
-  } else {
-    console.log("[GetSelector]: Injected");
-    init(global);
-    toggle(global);
-  }
+  console.log("[Ollacart Selector]: Started");
+  init(global);
+
+  chrome.runtime.sendMessage({type: "init"}, function(response) {
+    console.log(response);
+  });
+  
+  chrome.runtime.onMessage.addListener(
+    function(request, sender, sendResponse) {
+      console.log(request);
+      switch(request.type) {
+        case 'get_state':
+          sendResponse(global.state);
+          break;
+        case 'toggle_state':
+          toggle(global);
+          sendResponse(global.state);
+        case 'ce_id':
+          localStorage.setItem('ce_id', request.ce_id);
+      }
+    }
+  );
 })();
 
 }());

@@ -1,89 +1,73 @@
-const getState = tabId =>
-  new Promise(resolve => {
-    chrome.tabs.executeScript(
-      tabId,
-      {
-        code: "window.__gs && window.__gs.state"
-      },
-      result => resolve(result && result[0])
-    );
-  });
-const setCeID = (tabId, id) =>
-  new Promise(resolve => {
-    chrome.tabs.executeScript(
-      tabId, { code: `window.__gs && window.__gs.setCeID("${id}")` },
-      () => resolve()
-    )
-  })
+const updateIcon = async isPressed => {
+  await chrome.action.setIcon({ path: `icon_128${isPressed ? "_pressed" : ""}.png` });
+}
 
-const domPicker = tabId =>
-  chrome.tabs.executeScript(tabId, {
-    code: "window.__gs && window.__gs.domPick()"
-  });
-
-const updateIcon = isPressed =>
-  chrome.browserAction.setIcon({
-    path: `icon_128${isPressed ? "_pressed" : ""}.png`
-  });
-
-!(() => {
-  // const MENU_ID = "DOMPICKER";
-
-  // let isMenuAdded = false;
-  let selectedTabId = null;
-
-  const toggle = async () => {
-    const state = await getState(selectedTabId);
-    updateIcon(state);
-
-    chrome.storage.local.get(["ce_id"], async function(result){
-      if (checkCeID(result.ce_id)) return saveCeID(result.ce_id);
-      
-      chrome.storage.local.set({ce_id: "ce_id11"}, async function(result){
-        await setCeID(selectedTabId, "set_ce_id" + result);
+const sendMessage = data => {
+  return new Promise(resolve => {
+    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+      if (tabs.length === 0) resolve();
+      chrome.tabs.sendMessage(tabs[0].id, data, function(response) {
+        resolve(response);
       });
     });
-  
-    // if (state) {
-    //   chrome.contextMenus.create({
-    //     id: MENU_ID,
-    //     title: "DOM Picker",
-    //     contexts: ["all"],
-    //     documentUrlPatterns: ["*://*/*"],
-    //     onclick: e => {
-    //       if (e.menuItemId !== MENU_ID) {
-    //         return;
-    //       }
-    //       domPicker(selectedTabId);
-    //     }
-    //   }); 
-    //   isMenuAdded = true; 
-    // } else if (isMenuAdded) {
-    //   chrome.contextMenus.remove(MENU_ID);
-    // }
-  }  
-
-  chrome.browserAction.onClicked.addListener(tab => {
-    chrome.tabs.executeScript(
-      tab.ib,
-      {
-        file: "inject.js"
-      },
-      async () => {
-        selectedTabId = tab.id;
-        toggle();
-      }
-    );
   });
+}
 
-  chrome.tabs.onActivated.addListener(async tab => {
-    selectedTabId = tab.id;
-    toggle();
+const generateCeID = () => {
+  return Date.now() + '_' + parseInt(Math.random() * 10000) + '_' + parseInt(Math.random() * 10000);
+}
+
+const getCeID = () => {
+  return new Promise(resolve => {
+    chrome.storage.local.get(["ce_id"], async function(result){
+      if (result.ce_id && result.ce_id.length > 10) return resolve(result.ce_id);      
+      const ce_id = generateCeID();
+      chrome.storage.local.set({ ce_id }, async function(result){
+        resolve(ce_id)
+      });
+    });
   });
+}
 
-  chrome.tabs.onUpdated.addListener(async tab => {
-    selectedTabId = tab.id;
-    toggle();
-  });
+const getCurrentState = async () => {
+  return await sendMessage({ type: 'get_state' });
+}
 
-})();
+const toggleState = async () => {
+  return await sendMessage({ type: 'toggle_state' });
+}
+
+const currentTabChanged = async () => {
+  await updateIcon(await getCurrentState());
+  const ce_id = await getCeID();
+  await sendMessage({ type: 'ce_id', ce_id });
+}
+
+chrome.tabs.onUpdated.addListener(async function(tabId, changeInfo, tab) {
+  await currentTabChanged();
+});
+
+chrome.tabs.onActivated.addListener(async tab => {
+  await currentTabChanged();
+});
+
+chrome.runtime.onInstalled.addListener(async ({ reason, version }) => {
+  if (reason === chrome.runtime.OnInstalledReason.INSTALL) {
+  }
+});
+
+chrome.action.onClicked.addListener(async (tab) => {
+  const state = await toggleState();
+  await updateIcon(state);
+});
+
+chrome.runtime.onMessage.addListener(
+  function(request, sender, sendResponse) { //sender.tab
+    switch(request.type) {
+      case 'init':
+        sendResponse({ init: "great" });
+        break;
+    }
+  }
+);
+

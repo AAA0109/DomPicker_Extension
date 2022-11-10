@@ -19,7 +19,7 @@ const STYLES = `
 `;
 
 export const showMessage = (global, html) => {
-  global.message.innerHTML = `<b>${html}</b> Click [Right Mouse Button] to open context menu and copy the unique selector`;
+  global.message.innerHTML = `<b>${html}</b> Click on the items to add to Ollacart`;
   global.message.classList.toggle("gs_show", true);
 };
 
