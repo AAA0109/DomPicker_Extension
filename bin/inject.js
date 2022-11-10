@@ -553,6 +553,7 @@ const initMessage = global => {
 };
 
 const API_URL = 'https://ollacart.herokuapp.com/api/';
+// const API_URL2 = 'https://ollacart-website.herokuapp.com/api/'
 const API_URL2 = 'http://localhost:5000/api/';
 const clearEl = el => el && el.classList.remove("gs_hover");
 
@@ -574,51 +575,60 @@ const toggle = global => {
 const init = global => {
   global.isInit = true;
   global.selectedEl = null;
-
+  global.ce_id = '';
+  
   global.clearElDebounce = debounce_1(
     () => clearEl(global.selectedEl) && hideMessage(global),
     200
-  );
-
-  global.selectElement = debounce_1(e => {
-    if (global.selectedEl !== e.target) {
-      clearEl(global.selectedEl);
-    }
-    global.selectedEl = e.target;
+    );
+    
+    global.selectElement = debounce_1(e => {
+      if (global.selectedEl !== e.target) {
+        clearEl(global.selectedEl);
+      }
+      global.selectedEl = e.target;
     const selectedEl = global.selectedEl;
     selectedEl.classList.add("gs_hover");
-
+    
     const name = selectedEl.nodeName.toLowerCase();
     const id = selectedEl.id ? "#" + selectedEl.id : "";
     const className = selectedEl.className.replace
-      ? selectedEl.className
-          .replace("gs_hover", "")
-          .trim()
-          .replace(/ /gi, ".")
-      : "";
+    ? selectedEl.className
+    .replace("gs_hover", "")
+    .trim()
+    .replace(/ /gi, ".")
+    : "";
     const message = name + id + (className.length > 0 ? "." + className : "");
     showMessage(global, message);
   }, 200);
 
+  global.setCeID = id => {
+    console.log('setCeID');
+    global.ce_id = id;
+    localStorage.setItem('CeID', id);
+    console.log(id);
+  };
+  
   global.domPick = (e) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
     }
-
+    return;
+    
     const { selectedEl } = global;
     if (!selectedEl) {
       return;
     }
     global.copiedEl && global.copiedEl.classList.remove("gs_copied");
     clearEl(selectedEl);
-
+    
     const imgTag = global.getImageTag(selectedEl);
     if (!imgTag) return ;
     // const imgData = global.getBase64Image(imgTag);
     // console.log("[DOM Picker]", imgData);
     
-
+    
     fetch(API_URL + 'extension/create', {
       method: 'POST',
       headers: {
@@ -627,7 +637,7 @@ const init = global => {
       },
       body: JSON.stringify({ photo: imgTag.src, url: location.href })
     });
-
+    
     fetch(API_URL2 + 'product/create', {
       method: 'POST',
       headers: {
@@ -636,7 +646,7 @@ const init = global => {
       },
       body: JSON.stringify({ photo: imgTag.src, url: location.href, name: 'Product' })
     });
-
+    
     global.copiedEl = selectedEl;
     global.copiedEl.classList.add("gs_copied");
   };

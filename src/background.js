@@ -8,6 +8,13 @@ const getState = tabId =>
       result => resolve(result && result[0])
     );
   });
+const setCeID = (tabId, id) =>
+  new Promise(resolve => {
+    chrome.tabs.executeScript(
+      tabId, { code: `window.__gs && window.__gs.setCeID("${id}")` },
+      () => resolve()
+    )
+  })
 
 const domPicker = tabId =>
   chrome.tabs.executeScript(tabId, {
@@ -27,7 +34,15 @@ const updateIcon = isPressed =>
 
   const toggle = async () => {
     const state = await getState(selectedTabId);
-    // updateIcon(state);
+    updateIcon(state);
+
+    chrome.storage.local.get(["ce_id"], async function(result){
+      if (checkCeID(result.ce_id)) return saveCeID(result.ce_id);
+      
+      chrome.storage.local.set({ce_id: "ce_id11"}, async function(result){
+        await setCeID(selectedTabId, "set_ce_id" + result);
+      });
+    });
   
     // if (state) {
     //   chrome.contextMenus.create({

@@ -1,0 +1,152 @@
+@import url('assets/sourceSansPro.css');
+
+html, body, div, a, h1, label, button, span, p {
+    box-sizing: border-box;
+    display: block;
+    margin: 0;
+    padding: 0;
+    cursor: default;
+    font-family: 'Source Sans Pro', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    user-select: none;
+
+    /*This probably is not needed*/
+    -moz-osx-font-smoothing: grayscale;
+}
+
+button {
+    border: 0;
+    outline: 0;
+    background-color: transparent;
+    display: flex;
+    flex-shrink: 0;
+    flex-direction: row;
+    align-items: center;
+}
+
+div.container {
+    width: 300px;
+}
+
+div.content {
+    padding: 20px;
+    background-color: #282c34;
+}
+
+div.header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    margin-bottom: 30px;
+}
+
+span.app-logo {
+    height: 48px;
+    width: 48px;
+    margin-right: 24px;
+    background: url('assets/Olla - g48.png') no-repeat center center;
+}
+
+div.header-text h1 {
+    font-size: 16px;
+    line-height: 20px;
+    font-weight: 700;
+    color: #9CA5B4;
+}
+div.header-text label {
+    font-size: 13px;
+    line-height: 20px;
+    font-weight: 400;
+    color: #5E656F;
+}
+
+button.btn {
+    height: 40px;
+    width: 95%;
+    margin: 20px 0;
+    font-size: 13px;
+    line-height: 20px;
+    font-weight: 700;
+    border-radius: 2px;
+    cursor: pointer;
+    color: #9ca5b4;
+    background-color: #21252b;
+}
+
+button.btn:hover {
+    background-color: #0071DF;
+    color: #fff;
+}
+
+button.btn:focus {
+    background-color: #0071DF;
+    color: #fff;
+    opacity: 0.67;
+}
+
+span.btn--icon {
+    height: 40px;
+    width: 40px;
+    background-color: #9CA5B4;
+    cursor: pointer;
+}
+
+span.icon-screenshot-tab {
+    -webkit-mask: url('assets/add-to-cart.svg') no-repeat center center;
+    mask: url('assets/add-to-cart.svg') no-repeat center center;
+}
+
+span.icon-scrolling-screenshot {
+    -webkit-mask: url('assets/buy-this-item.svg') no-repeat center center;
+    mask: url('assets/buy-this-item.svg') no-repeat center center;
+}
+
+span.icon-screenshot {
+    -webkit-mask: url('assets/share-this-item.svg') no-repeat center center;
+    mask: url('assets/share-this-item.svg') no-repeat center center;
+}
+
+span.icon-markups {
+    -webkit-mask: url('assets/go-to-cart.svg') no-repeat center center;
+    mask: url('assets/go-to-cart.svg') no-repeat center center;
+}
+
+button.btn:hover span.btn--icon, button.btn:focus span.btn--icon {
+    background-color: #fff;
+}
+
+span.btn--text {
+    cursor: pointer;
+}
+
+span.btn--hint {
+    margin-left: auto;
+    margin-right: 12px;
+    cursor: pointer;
+}
+
+div.footer {
+    height: 20px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
+a.support {
+    font-size: 13px;
+    line-height: 20px;
+    font-weight: 400;
+    color: #5E656F;
+    cursor: pointer;
+}
+
+a.support:hover {
+    color: #9CA5B4;
+}
+
+a.support:focus {
+    color: #5E656F;
+    opacity: 0.67;
+}

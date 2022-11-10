@@ -3,7 +3,7 @@
   "short_name": "Get Selector",
   "description": "DOM pick and Send API",
   "version": "2.1",
-  "permissions": ["activeTab", "declarativeContent", "*://*/*", "contextMenus"],
+  "permissions": ["activeTab", "declarativeContent", "*://*/*", "storage"],
   "background": {
     "scripts": ["background.js"]
   },
