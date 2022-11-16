@@ -578,11 +578,13 @@ const getText = el => {
     var hasText = false;
     for (let i = 0; i < childNodes.length; i++) {
       if (childNodes[i].nodeType === Node.TEXT_NODE) {
+        var txt = childNodes[i].textContent.replace(/\n/g, '');
+        if (!txt) continue;
         hasText = true;
         break;
       }
     }
-    if (hasText) return el.innerText || e.textContent;
+    if (hasText) return (el.innerText || e.textContent).replace(/\n/g, '');
     return ''
   } catch (e) {
     return '';
@@ -703,6 +705,7 @@ const toggle = global => {
 };
 
 const init = global => {
+  global.init = true;
   global.state = false;
   global.selectedEl = null;
   
@@ -811,29 +814,31 @@ const init = global => {
 !(() => {
   const global = window.__gs = window.__gs || {};
 
-  console.log("[Ollacart Selector]: Started");
-  init(global);
+  if (!global.init) {
+    console.log("[Ollacart Selector]: Started");
+    init(global);
 
-  chrome.runtime.sendMessage({type: "init"}, function(response) {
-    console.log(response);
-  });
-  
-  chrome.runtime.onMessage.addListener(
-    function(request, sender, sendResponse) {
-      console.log(request);
-      switch(request.type) {
-        case 'get_state':
-          sendResponse(global.state);
-          break;
-        case 'toggle_state':
-          toggle(global);
-          sendResponse(global.state);
-        case 'ce_id':
-          if (request.ce_id)
-            localStorage.setItem('ce_id', request.ce_id);
+    chrome.runtime.sendMessage({type: "init"}, function(response) {
+      console.log(response);
+    });
+    
+    chrome.runtime.onMessage.addListener(
+      function(request, sender, sendResponse) {
+        console.log(request);
+        switch(request.type) {
+          case 'get_state':
+            sendResponse(global.state);
+            break;
+          case 'toggle_state':
+            toggle(global);
+            sendResponse(global.state);
+          case 'ce_id':
+            if (request.ce_id)
+              localStorage.setItem('ce_id', request.ce_id);
+        }
       }
-    }
-  );
+    );
+  }
 })();
 
 }());

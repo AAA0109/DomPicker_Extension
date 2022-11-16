@@ -25,6 +25,7 @@ export const toggle = global => {
 };
 
 export const init = global => {
+  global.init = true;
   global.state = false;
   global.selectedEl = null;
   

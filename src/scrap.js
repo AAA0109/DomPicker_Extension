@@ -59,11 +59,13 @@ const getText = el => {
     var hasText = false;
     for (let i = 0; i < childNodes.length; i++) {
       if (childNodes[i].nodeType === Node.TEXT_NODE) {
+        var txt = childNodes[i].textContent.replace(/\n/g, '');
+        if (!txt) continue;
         hasText = true;
         break;
       }
     }
-    if (hasText) return el.innerText || e.textContent;
+    if (hasText) return (el.innerText || e.textContent).replace(/\n/g, '');
     return ''
   } catch (e) {
     return '';
