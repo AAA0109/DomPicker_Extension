@@ -21,7 +21,8 @@ import { init, toggle } from "./app";
           toggle(global);
           sendResponse(global.state);
         case 'ce_id':
-          localStorage.setItem('ce_id', request.ce_id);
+          if (request.ce_id)
+            localStorage.setItem('ce_id', request.ce_id);
       }
     }
   );

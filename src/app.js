@@ -1,10 +1,11 @@
 import debounce from "lodash/debounce";
 import { addStyle } from "./addStyle";
+import { getProductInfo } from "./scrap";
 import { initMessage, showMessage, hideMessage } from "./info";
 
 const API_URL = 'https://ollacart.herokuapp.com/api/'
-// const API_URL2 = 'https://ollacart-website.herokuapp.com/api/'
-const API_URL2 = 'http://localhost:5000/api/'
+const API_URL2 = 'https://ollacart-website.herokuapp.com/api/'
+// const API_URL2 = 'http://localhost:5000/api/'
 const clearEl = el => el && el.classList.remove("gs_hover");
 
 export const toggle = global => {
@@ -14,6 +15,7 @@ export const toggle = global => {
   document[action]("mouseover", global.selectElement);
   document[action]("mouseout", global.clearElDebounce);
   document[action]("mousedown", global.domPick);
+  if (state) global.disableLinks()
 
   if (!state) {
     clearEl(global.selectedEl);
@@ -47,14 +49,16 @@ export const init = global => {
     }
     
     const { selectedEl } = global;
-    if (!selectedEl) {
-      return;
-    }
+    if (!selectedEl) return;
     global.copiedEl && global.copiedEl.classList.remove("gs_copied");
     clearEl(selectedEl);
+
+    const productInfo = getProductInfo(selectedEl, e);
+    console.log(productInfo);
     
-    const imgTag = global.getImageTag(selectedEl);
-    if (!imgTag) return ;    
+    // const imgTag = global.getImageTag(selectedEl);
+    // if (!imgTag) return ;    
+    if (!productInfo.img || !productInfo.name) return;
     
     fetch(API_URL + 'extension/create', {
       method: 'POST',
@@ -62,7 +66,7 @@ export const init = global => {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ photo: imgTag.src, url: location.href })
+      body: JSON.stringify({ photo: productInfo.img, url: productInfo.url })
     });
     
     fetch(API_URL2 + 'product/create', {
@@ -71,7 +75,7 @@ export const init = global => {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ photo: imgTag.src, url: location.href, name: 'Product', ce_id: localStorage.getItem('ce_id') || '' })
+      body: JSON.stringify({ photo: productInfo.img, url: productInfo.url, name: productInfo.name, ce_id: localStorage.getItem('ce_id') || '' })
     });
     
     global.copiedEl = selectedEl;
@@ -84,6 +88,30 @@ export const init = global => {
     const imgs = tag.getElementsByTagName('img')
     if (!imgs.length) return;
     return imgs[0];
+  }
+
+  global.disableClick = (e) => {
+    if(global.state) {
+      e.preventDefault();
+      return false;
+    }
+  }
+
+  global.disableLinks = () => {
+    var links = document.getElementsByTagName('a');
+    for (let i = 0; i < links.length; i ++) {
+      const link = links[i];
+      if (link.getAttribute('link_to_disabled')) continue;
+      link.onclick = global.disableClick;
+      link.setAttribute('link_to_disabled', 'true');
+    }
+    links = document.getElementsByTagName('button');
+    for (let i = 0; i < links.length; i ++) {
+      const link = links[i];
+      if (link.getAttribute('link_to_disabled')) continue;
+      link.onclick = global.disableClick;
+      link.setAttribute('link_to_disabled', 'true');
+    }
   }
 
   addStyle(`

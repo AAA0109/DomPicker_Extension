@@ -518,6 +518,135 @@ const addStyle = style => {
   document.head.appendChild(styleTag);
 };
 
+const checkIfSimilarProductContainer = el => {
+  const area_limit = 80 * 80, txt_limit_ct = 2;
+  var txt_ct = 0;
+  const itms = el.getElementsByTagName('*');
+  for (let i = 0; i < itms.length; i ++) {
+    if (getText(itms[i])) txt_ct ++;
+    if (txt_ct > txt_limit_ct) break;
+  }
+  if (txt_ct < txt_limit_ct) return false;
+
+  const imgs = el.getElementsByTagName('img');
+  for (let i = 0; i < imgs.length; i ++) {
+    const img = imgs[i];
+    const area = img.width * img.height;
+    if (area < area_limit) continue;
+    return true;
+  }
+  return false;  
+};
+
+const getProductRootElement = el => {
+  if (checkIfSimilarProductContainer(el)) return el;
+  let p = el.parentNode;
+  while (p && p.tagName !== 'body') {
+    if (checkIfSimilarProductContainer(p)) return p;
+    p = p.parentNode;
+  }
+  return el;
+};
+
+const isVisible = el => {
+  if (el.style.opacity === '0') return false;
+  if (el.style.visibility == 'hidden') return false;
+  return true;
+};
+
+const checkIfBetterImg = (a, b) => {
+  if (!isVisible(b)) return false;
+  if (!isVisible(a)) return true;
+  if (!b.src) return false;
+  if (!a.src) return true;
+
+  const offset = 2;
+  const r1 = a.getBoundingClientRect(), r2 = b.getBoundingClientRect();
+  const area1 = r1.width * r1.height, area2 = r2.width * r2.height;
+  if (Math.abs(area1 - area2) < offset * offset) {
+    if (Math.abs(r1.x - r2.x) < offset && Math.abs(r1.y - r2.y) < offset) return true;
+  }
+  if (area1 > area2) return false;
+  return true;
+};
+
+const getText = el => {
+  if (!el) return '';
+  if (['noscript', 'img'].indexOf(el.nodeName.toLocaleLowerCase()) > -1) return '';
+  try {
+    const childNodes = el.childNodes;
+    var hasText = false;
+    for (let i = 0; i < childNodes.length; i++) {
+      if (childNodes[i].nodeType === Node.TEXT_NODE) {
+        hasText = true;
+        break;
+      }
+    }
+    if (hasText) return el.innerText || e.textContent;
+    return ''
+  } catch (e) {
+    return '';
+  }
+};
+
+const checkIfBetterTitle = (a, b) => {
+  const txt1 = getText(a), txt2 = getText(b);
+  if (txt1 && !txt2) return true;
+  if (!txt1) return false;
+
+  const fontSize1 = parseFloat(window.getComputedStyle(a).fontSize) || 0,
+    fontSize2 = parseFloat(window.getComputedStyle(b).fontSize) || 0;
+  
+  if (fontSize1 > fontSize2) return true;
+  return false;
+};
+
+const findHref = el => {
+  var p = el;
+  while(p && p.tagName !== 'body') {
+    if ((p.tagName === 'a' || p.tagName === 'button') && p.href) return p.href;
+    p = p.parentNode;
+  }
+  return location.href;
+};
+
+const getImgUrl = (el) => {
+  if (!el) return '';
+  if (el.tagName === 'img') return el.src;
+  const imgs = el.getElementsByTagName('img');
+  if (!imgs.length) return '';
+
+  var ret = imgs[0];
+  for (let i = 1; i < imgs.length; i ++) {
+    if (checkIfBetterImg(ret, imgs[i])) ret = imgs[i];
+  }
+  return ret.src;
+};
+
+const getName = (el) => {
+  const itms = el.getElementsByTagName("*");
+  var ret = itms[0];
+  for (let i = 1; i < itms.length; i ++) {
+    if (checkIfBetterTitle(itms[i], ret)) ret = itms[i];
+  }
+  return getText(ret);
+};
+
+const getUrl = (e) => {
+  const el = document.elementFromPoint(e.clientX, e.clientY);
+  if (!el) return '';
+  return findHref(el);
+};
+
+const getProductInfo = (el, e) => {
+  const p = getProductRootElement(el);
+  return {
+    name: getName(p),
+    img: getImgUrl(p),
+    url: getUrl(e)
+  }
+};
+
 const STYLES = `
   .gs_message {
       position: fixed;
@@ -553,8 +682,8 @@ const initMessage = global => {
 };
 
 const API_URL = 'https://ollacart.herokuapp.com/api/';
-// const API_URL2 = 'https://ollacart-website.herokuapp.com/api/'
-const API_URL2 = 'http://localhost:5000/api/';
+const API_URL2 = 'https://ollacart-website.herokuapp.com/api/';
+// const API_URL2 = 'http://localhost:5000/api/'
 const clearEl = el => el && el.classList.remove("gs_hover");
 
 const toggle = global => {
@@ -564,6 +693,7 @@ const toggle = global => {
   document[action]("mouseover", global.selectElement);
   document[action]("mouseout", global.clearElDebounce);
   document[action]("mousedown", global.domPick);
+  if (state) global.disableLinks();
 
   if (!state) {
     clearEl(global.selectedEl);
@@ -597,14 +727,16 @@ const init = global => {
     }
     
     const { selectedEl } = global;
-    if (!selectedEl) {
-      return;
-    }
+    if (!selectedEl) return;
     global.copiedEl && global.copiedEl.classList.remove("gs_copied");
     clearEl(selectedEl);
+
+    const productInfo = getProductInfo(selectedEl, e);
+    console.log(productInfo);
     
-    const imgTag = global.getImageTag(selectedEl);
-    if (!imgTag) return ;    
+    // const imgTag = global.getImageTag(selectedEl);
+    // if (!imgTag) return ;    
+    if (!productInfo.img || !productInfo.name) return;
     
     fetch(API_URL + 'extension/create', {
       method: 'POST',
@@ -612,7 +744,7 @@ const init = global => {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ photo: imgTag.src, url: location.href })
+      body: JSON.stringify({ photo: productInfo.img, url: productInfo.url })
     });
     
     fetch(API_URL2 + 'product/create', {
@@ -621,7 +753,7 @@ const init = global => {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ photo: imgTag.src, url: location.href, name: 'Product', ce_id: localStorage.getItem('ce_id') || '' })
+      body: JSON.stringify({ photo: productInfo.img, url: productInfo.url, name: productInfo.name, ce_id: localStorage.getItem('ce_id') || '' })
     });
     
     global.copiedEl = selectedEl;
@@ -634,6 +766,30 @@ const init = global => {
     const imgs = tag.getElementsByTagName('img');
     if (!imgs.length) return;
     return imgs[0];
+  };
+
+  global.disableClick = (e) => {
+    if(global.state) {
+      e.preventDefault();
+      return false;
+    }
+  };
+
+  global.disableLinks = () => {
+    var links = document.getElementsByTagName('a');
+    for (let i = 0; i < links.length; i ++) {
+      const link = links[i];
+      if (link.getAttribute('link_to_disabled')) continue;
+      link.onclick = global.disableClick;
+      link.setAttribute('link_to_disabled', 'true');
+    }
+    links = document.getElementsByTagName('button');
+    for (let i = 0; i < links.length; i ++) {
+      const link = links[i];
+      if (link.getAttribute('link_to_disabled')) continue;
+      link.onclick = global.disableClick;
+      link.setAttribute('link_to_disabled', 'true');
+    }
   };
 
   addStyle(`
@@ -673,7 +829,8 @@ const init = global => {
           toggle(global);
           sendResponse(global.state);
         case 'ce_id':
-          localStorage.setItem('ce_id', request.ce_id);
+          if (request.ce_id)
+            localStorage.setItem('ce_id', request.ce_id);
       }
     }
   );
