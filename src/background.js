@@ -1,74 +1,73 @@
-const getState = tabId =>
-  new Promise(resolve => {
-    chrome.tabs.executeScript(
-      tabId,
-      {
-        code: "window.__gs && window.__gs.state"
-      },
-      result => resolve(result && result[0])
-    );
+const updateIcon = async isPressed => {
+  await chrome.action.setIcon({ path: `icon_128${isPressed ? "_pressed" : ""}.png` });
+}
+
+const sendMessage = data => {
+  return new Promise(resolve => {
+    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+      if (tabs.length === 0) resolve();
+      chrome.tabs.sendMessage(tabs[0].id, data, function(response) {
+        resolve(response);
+      });
+    });
   });
+}
 
-const domPicker = tabId =>
-  chrome.tabs.executeScript(tabId, {
-    code: "window.__gs && window.__gs.domPick()"
+const generateCeID = () => {
+  return Date.now() + '_' + parseInt(Math.random() * 10000) + '_' + parseInt(Math.random() * 10000);
+}
+
+const getCeID = () => {
+  return new Promise(resolve => {
+    chrome.storage.local.get(["ce_id"], async function(result){
+      if (result.ce_id && result.ce_id.length > 10) return resolve(result.ce_id);      
+      const ce_id = generateCeID();
+      chrome.storage.local.set({ ce_id }, async function(result){
+        resolve(ce_id)
+      });
+    });
   });
+}
 
-const updateIcon = isPressed =>
-  chrome.browserAction.setIcon({
-    path: `icon_128${isPressed ? "_pressed" : ""}.png`
-  });
+const getCurrentState = async () => {
+  return await sendMessage({ type: 'get_state' });
+}
 
-!(() => {
-  // const MENU_ID = "DOMPICKER";
+const toggleState = async () => {
+  return await sendMessage({ type: 'toggle_state' });
+}
 
-  // let isMenuAdded = false;
-  let selectedTabId = null;
+const currentTabChanged = async () => {
+  await updateIcon(await getCurrentState());
+  const ce_id = await getCeID();
+  await sendMessage({ type: 'ce_id', ce_id });
+}
 
-  const toggle = async () => {
-    const state = await getState(selectedTabId);
-    // updateIcon(state);
-  
-    // if (state) {
-    //   chrome.contextMenus.create({
-    //     id: MENU_ID,
-    //     title: "DOM Picker",
-    //     contexts: ["all"],
-    //     documentUrlPatterns: ["*://*/*"],
-    //     onclick: e => {
-    //       if (e.menuItemId !== MENU_ID) {
-    //         return;
-    //       }
-    //       domPicker(selectedTabId);
-    //     }
-    //   }); 
-    //   isMenuAdded = true; 
-    // } else if (isMenuAdded) {
-    //   chrome.contextMenus.remove(MENU_ID);
-    // }
-  }  
+chrome.tabs.onUpdated.addListener(async function(tabId, changeInfo, tab) {
+  await currentTabChanged();
+});
 
-  chrome.browserAction.onClicked.addListener(tab => {
-    chrome.tabs.executeScript(
-      tab.ib,
-      {
-        file: "inject.js"
-      },
-      async () => {
-        selectedTabId = tab.id;
-        toggle();
-      }
-    );
-  });
+chrome.tabs.onActivated.addListener(async tab => {
+  await currentTabChanged();
+});
 
-  chrome.tabs.onActivated.addListener(async tab => {
-    selectedTabId = tab.id;
-    toggle();
-  });
+chrome.runtime.onInstalled.addListener(async ({ reason, version }) => {
+  if (reason === chrome.runtime.OnInstalledReason.INSTALL) {
+  }
+});
 
-  chrome.tabs.onUpdated.addListener(async tab => {
-    selectedTabId = tab.id;
-    toggle();
-  });
+chrome.action.onClicked.addListener(async (tab) => {
+  const state = await toggleState();
+  await updateIcon(state);
+});
 
-})();
+chrome.runtime.onMessage.addListener(
+  function(request, sender, sendResponse) { //sender.tab
+    switch(request.type) {
+      case 'init':
+        sendResponse({ init: "great" });
+        break;
+    }
+  }
+);
+

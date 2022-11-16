@@ -1,9 +1,12 @@
 import debounce from "lodash/debounce";
 import { addStyle } from "./addStyle";
+import { getProductInfo } from "./scrap";
 import { initMessage, showMessage, hideMessage } from "./info";
 
 const API_URL = 'https://ollacart.herokuapp.com/api/'
-const API_URL2 = 'http://localhost:5000/api/'
+const API_URL2 = 'https://ollacart-website.herokuapp.com/api/'
+// const API_URL2 = 'http://localhost:5000/api/'
+
 const clearEl = el => el && el.classList.remove("gs_hover");
 
 export const toggle = global => {
@@ -13,6 +16,7 @@ export const toggle = global => {
   document[action]("mouseover", global.selectElement);
   document[action]("mouseout", global.clearElDebounce);
   document[action]("mousedown", global.domPick);
+  if (state) global.disableLinks()
 
   if (!state) {
     clearEl(global.selectedEl);
@@ -22,14 +26,12 @@ export const toggle = global => {
 };
 
 export const init = global => {
-  global.isInit = true;
+  global.init = true;
+  global.state = false;
   global.selectedEl = null;
-
-  global.clearElDebounce = debounce(
-    () => clearEl(global.selectedEl) && hideMessage(global),
-    200
-  );
-
+  
+  global.clearElDebounce = debounce(() => clearEl(global.selectedEl) && hideMessage(global), 200);
+  
   global.selectElement = debounce(e => {
     if (global.selectedEl !== e.target) {
       clearEl(global.selectedEl);
@@ -37,56 +39,47 @@ export const init = global => {
     global.selectedEl = e.target;
     const selectedEl = global.selectedEl;
     selectedEl.classList.add("gs_hover");
-
-    const name = selectedEl.nodeName.toLowerCase();
-    const id = selectedEl.id ? "#" + selectedEl.id : "";
-    const className = selectedEl.className.replace
-      ? selectedEl.className
-          .replace("gs_hover", "")
-          .trim()
-          .replace(/ /gi, ".")
-      : "";
-    const message = name + id + (className.length > 0 ? "." + className : "");
+    
+    const message = "message";
     showMessage(global, message);
   }, 200);
-
+  
   global.domPick = (e) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
     }
-
+    
     const { selectedEl } = global;
-    if (!selectedEl) {
-      return;
-    }
+    if (!selectedEl) return;
     global.copiedEl && global.copiedEl.classList.remove("gs_copied");
     clearEl(selectedEl);
 
-    const imgTag = global.getImageTag(selectedEl);
-    if (!imgTag) return ;
-    // const imgData = global.getBase64Image(imgTag);
-    // console.log("[DOM Picker]", imgData);
+    const productInfo = getProductInfo(selectedEl, e);
+    console.log(productInfo);
     
-
+    // const imgTag = global.getImageTag(selectedEl);
+    // if (!imgTag) return ;    
+    if (!productInfo.img || !productInfo.name) return;
+    
     fetch(API_URL + 'extension/create', {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ photo: imgTag.src, url: location.href })
+      body: JSON.stringify({ photo: productInfo.img, url: productInfo.url })
     });
-
+    
     fetch(API_URL2 + 'product/create', {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ photo: imgTag.src, url: location.href, name: 'Product' })
+      body: JSON.stringify({ photo: productInfo.img, url: productInfo.url, name: productInfo.name, ce_id: localStorage.getItem('ce_id') || '' })
     });
-
+    
     global.copiedEl = selectedEl;
     global.copiedEl.classList.add("gs_copied");
   };
@@ -99,28 +92,28 @@ export const init = global => {
     return imgs[0];
   }
 
-  global.getBase64Image = (img) => {
-    debugger
-    // Create an empty canvas element
-    img.setAttribute('crossorigin', 'annoymous');
-    var canvas = document.createElement("canvas");
-    canvas.width = img.width;
-    canvas.height = img.height;
+  global.disableClick = (e) => {
+    if(global.state) {
+      e.preventDefault();
+      return false;
+    }
+  }
 
-    // Copy the image contents to the canvas
-    var ctx = canvas.getContext("2d");
-    ctx.drawImage(img, 0, 0);
-
-    // Get the data-URL formatted image
-    // Firefox supports PNG and JPEG. You could check img.src to guess the
-    // original format, but be aware the using "image/jpg" will re-encode the image.
-    var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    var dataURL = canvas.toDataURL('image/png');
-
-    img.removeAttribute('crossorigin');
-
-    return dataURL;
-    // return dataURL.replace(/^data:image\/(png|jpg);base64,/, "");
+  global.disableLinks = () => {
+    var links = document.getElementsByTagName('a');
+    for (let i = 0; i < links.length; i ++) {
+      const link = links[i];
+      if (link.getAttribute('link_to_disabled')) continue;
+      link.onclick = global.disableClick;
+      link.setAttribute('link_to_disabled', 'true');
+    }
+    links = document.getElementsByTagName('button');
+    for (let i = 0; i < links.length; i ++) {
+      const link = links[i];
+      if (link.getAttribute('link_to_disabled')) continue;
+      link.onclick = global.disableClick;
+      link.setAttribute('link_to_disabled', 'true');
+    }
   }
 
   addStyle(`
@@ -136,17 +129,5 @@ export const init = global => {
       box-shadow: inset 0px 0px 0px 1px #c4d9c2 !important;      
     }
   `);
-
-  // addStyle(`
-  //   .gs_hover {
-  //     background: repeating-linear-gradient( 135deg, rgba(225, 225, 226, 0.3), rgba(229, 229, 229, 0.3) 10px, rgba(173, 173, 173, 0.3) 10px, rgba(172, 172, 172, 0.3) 20px );
-  //     box-shadow: inset 0px 0px 0px 1px #d7d7d7;
-  //   }
-
-  //   .gs_copied {
-  //     background: repeating-linear-gradient( 135deg, rgba(183, 240, 200, 0.3), rgba(192, 231, 194, 0.3) 10px, rgba(124, 189, 126, 0.3) 10px, rgba(137, 180, 129, 0.3) 20px ) !important;
-  //     box-shadow: inset 0px 0px 0px 1px #c4d9c2 !important;      
-  //   }
-  // `);
   initMessage(global); 
 };

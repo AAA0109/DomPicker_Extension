@@ -518,6 +518,137 @@ const addStyle = style => {
   document.head.appendChild(styleTag);
 };
 
+const checkIfSimilarProductContainer = el => {
+  const area_limit = 80 * 80, txt_limit_ct = 2;
+  var txt_ct = 0;
+  const itms = el.getElementsByTagName('*');
+  for (let i = 0; i < itms.length; i ++) {
+    if (getText(itms[i])) txt_ct ++;
+    if (txt_ct > txt_limit_ct) break;
+  }
+  if (txt_ct < txt_limit_ct) return false;
+
+  const imgs = el.getElementsByTagName('img');
+  for (let i = 0; i < imgs.length; i ++) {
+    const img = imgs[i];
+    const area = img.width * img.height;
+    if (area < area_limit) continue;
+    return true;
+  }
+  return false;  
+};
+
+const getProductRootElement = el => {
+  if (checkIfSimilarProductContainer(el)) return el;
+  let p = el.parentNode;
+  while (p && p.tagName !== 'body') {
+    if (checkIfSimilarProductContainer(p)) return p;
+    p = p.parentNode;
+  }
+  return el;
+};
+
+const isVisible = el => {
+  if (el.style.opacity === '0') return false;
+  if (el.style.visibility == 'hidden') return false;
+  return true;
+};
+
+const checkIfBetterImg = (a, b) => {
+  if (!isVisible(b)) return false;
+  if (!isVisible(a)) return true;
+  if (!b.src) return false;
+  if (!a.src) return true;
+
+  const offset = 2;
+  const r1 = a.getBoundingClientRect(), r2 = b.getBoundingClientRect();
+  const area1 = r1.width * r1.height, area2 = r2.width * r2.height;
+  if (Math.abs(area1 - area2) < offset * offset) {
+    if (Math.abs(r1.x - r2.x) < offset && Math.abs(r1.y - r2.y) < offset) return true;
+  }
+  if (area1 > area2) return false;
+  return true;
+};
+
+const getText = el => {
+  if (!el) return '';
+  if (['noscript', 'img'].indexOf(el.nodeName.toLocaleLowerCase()) > -1) return '';
+  try {
+    const childNodes = el.childNodes;
+    var hasText = false;
+    for (let i = 0; i < childNodes.length; i++) {
+      if (childNodes[i].nodeType === Node.TEXT_NODE) {
+        var txt = childNodes[i].textContent.replace(/\n/g, '');
+        if (!txt) continue;
+        hasText = true;
+        break;
+      }
+    }
+    if (hasText) return (el.innerText || e.textContent).replace(/\n/g, '');
+    return ''
+  } catch (e) {
+    return '';
+  }
+};
+
+const checkIfBetterTitle = (a, b) => {
+  const txt1 = getText(a), txt2 = getText(b);
+  if (txt1 && !txt2) return true;
+  if (!txt1) return false;
+
+  const fontSize1 = parseFloat(window.getComputedStyle(a).fontSize) || 0,
+    fontSize2 = parseFloat(window.getComputedStyle(b).fontSize) || 0;
+  
+  if (fontSize1 > fontSize2) return true;
+  return false;
+};
+
+const findHref = el => {
+  var p = el;
+  while(p && p.tagName !== 'body') {
+    if ((p.tagName === 'a' || p.tagName === 'button') && p.href) return p.href;
+    p = p.parentNode;
+  }
+  return location.href;
+};
+
+const getImgUrl = (el) => {
+  if (!el) return '';
+  if (el.tagName === 'img') return el.src;
+  const imgs = el.getElementsByTagName('img');
+  if (!imgs.length) return '';
+
+  var ret = imgs[0];
+  for (let i = 1; i < imgs.length; i ++) {
+    if (checkIfBetterImg(ret, imgs[i])) ret = imgs[i];
+  }
+  return ret.src;
+};
+
+const getName = (el) => {
+  const itms = el.getElementsByTagName("*");
+  var ret = itms[0];
+  for (let i = 1; i < itms.length; i ++) {
+    if (checkIfBetterTitle(itms[i], ret)) ret = itms[i];
+  }
+  return getText(ret);
+};
+
+const getUrl = (e) => {
+  const el = document.elementFromPoint(e.clientX, e.clientY);
+  if (!el) return '';
+  return findHref(el);
+};
+
+const getProductInfo = (el, e) => {
+  const p = getProductRootElement(el);
+  return {
+    name: getName(p),
+    img: getImgUrl(p),
+    url: getUrl(e)
+  }
+};
+
 const STYLES = `
   .gs_message {
       position: fixed;
@@ -537,7 +668,7 @@ const STYLES = `
 `;
 
 const showMessage = (global, html) => {
-  global.message.innerHTML = `<b>${html}</b> Click [Right Mouse Button] to open context menu and copy the unique selector`;
+  global.message.innerHTML = `<b>${html}</b> Click on the items to add to Ollacart`;
   global.message.classList.toggle("gs_show", true);
 };
 
@@ -553,7 +684,8 @@ const initMessage = global => {
 };
 
 const API_URL = 'https://ollacart.herokuapp.com/api/';
-const API_URL2 = 'http://localhost:5000/api/';
+const API_URL2 = 'https://ollacart-website.herokuapp.com/api/';
+// const API_URL2 = 'http://localhost:5000/api/'
 const clearEl = el => el && el.classList.remove("gs_hover");
 
 const toggle = global => {
@@ -563,6 +695,7 @@ const toggle = global => {
   document[action]("mouseover", global.selectElement);
   document[action]("mouseout", global.clearElDebounce);
   document[action]("mousedown", global.domPick);
+  if (state) global.disableLinks();
 
   if (!state) {
     clearEl(global.selectedEl);
@@ -572,14 +705,12 @@ const toggle = global => {
 };
 
 const init = global => {
-  global.isInit = true;
+  global.init = true;
+  global.state = false;
   global.selectedEl = null;
-
-  global.clearElDebounce = debounce_1(
-    () => clearEl(global.selectedEl) && hideMessage(global),
-    200
-  );
-
+  
+  global.clearElDebounce = debounce_1(() => clearEl(global.selectedEl) && hideMessage(global), 200);
+  
   global.selectElement = debounce_1(e => {
     if (global.selectedEl !== e.target) {
       clearEl(global.selectedEl);
@@ -587,56 +718,47 @@ const init = global => {
     global.selectedEl = e.target;
     const selectedEl = global.selectedEl;
     selectedEl.classList.add("gs_hover");
-
-    const name = selectedEl.nodeName.toLowerCase();
-    const id = selectedEl.id ? "#" + selectedEl.id : "";
-    const className = selectedEl.className.replace
-      ? selectedEl.className
-          .replace("gs_hover", "")
-          .trim()
-          .replace(/ /gi, ".")
-      : "";
-    const message = name + id + (className.length > 0 ? "." + className : "");
+    
+    const message = "message";
     showMessage(global, message);
   }, 200);
-
+  
   global.domPick = (e) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
     }
-
+    
     const { selectedEl } = global;
-    if (!selectedEl) {
-      return;
-    }
+    if (!selectedEl) return;
     global.copiedEl && global.copiedEl.classList.remove("gs_copied");
     clearEl(selectedEl);
 
-    const imgTag = global.getImageTag(selectedEl);
-    if (!imgTag) return ;
-    // const imgData = global.getBase64Image(imgTag);
-    // console.log("[DOM Picker]", imgData);
+    const productInfo = getProductInfo(selectedEl, e);
+    console.log(productInfo);
     
-
+    // const imgTag = global.getImageTag(selectedEl);
+    // if (!imgTag) return ;    
+    if (!productInfo.img || !productInfo.name) return;
+    
     fetch(API_URL + 'extension/create', {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ photo: imgTag.src, url: location.href })
+      body: JSON.stringify({ photo: productInfo.img, url: productInfo.url })
     });
-
+    
     fetch(API_URL2 + 'product/create', {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ photo: imgTag.src, url: location.href, name: 'Product' })
+      body: JSON.stringify({ photo: productInfo.img, url: productInfo.url, name: productInfo.name, ce_id: localStorage.getItem('ce_id') || '' })
     });
-
+    
     global.copiedEl = selectedEl;
     global.copiedEl.classList.add("gs_copied");
   };
@@ -649,28 +771,28 @@ const init = global => {
     return imgs[0];
   };
 
-  global.getBase64Image = (img) => {
-    debugger
-    // Create an empty canvas element
-    img.setAttribute('crossorigin', 'annoymous');
-    var canvas = document.createElement("canvas");
-    canvas.width = img.width;
-    canvas.height = img.height;
+  global.disableClick = (e) => {
+    if(global.state) {
+      e.preventDefault();
+      return false;
+    }
+  };
 
-    // Copy the image contents to the canvas
-    var ctx = canvas.getContext("2d");
-    ctx.drawImage(img, 0, 0);
-
-    // Get the data-URL formatted image
-    // Firefox supports PNG and JPEG. You could check img.src to guess the
-    // original format, but be aware the using "image/jpg" will re-encode the image.
-    var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    var dataURL = canvas.toDataURL('image/png');
-
-    img.removeAttribute('crossorigin');
-
-    return dataURL;
-    // return dataURL.replace(/^data:image\/(png|jpg);base64,/, "");
+  global.disableLinks = () => {
+    var links = document.getElementsByTagName('a');
+    for (let i = 0; i < links.length; i ++) {
+      const link = links[i];
+      if (link.getAttribute('link_to_disabled')) continue;
+      link.onclick = global.disableClick;
+      link.setAttribute('link_to_disabled', 'true');
+    }
+    links = document.getElementsByTagName('button');
+    for (let i = 0; i < links.length; i ++) {
+      const link = links[i];
+      if (link.getAttribute('link_to_disabled')) continue;
+      link.onclick = global.disableClick;
+      link.setAttribute('link_to_disabled', 'true');
+    }
   };
 
   addStyle(`
@@ -686,30 +808,36 @@ const init = global => {
       box-shadow: inset 0px 0px 0px 1px #c4d9c2 !important;      
     }
   `);
-
-  // addStyle(`
-  //   .gs_hover {
-  //     background: repeating-linear-gradient( 135deg, rgba(225, 225, 226, 0.3), rgba(229, 229, 229, 0.3) 10px, rgba(173, 173, 173, 0.3) 10px, rgba(172, 172, 172, 0.3) 20px );
-  //     box-shadow: inset 0px 0px 0px 1px #d7d7d7;
-  //   }
-
-  //   .gs_copied {
-  //     background: repeating-linear-gradient( 135deg, rgba(183, 240, 200, 0.3), rgba(192, 231, 194, 0.3) 10px, rgba(124, 189, 126, 0.3) 10px, rgba(137, 180, 129, 0.3) 20px ) !important;
-  //     box-shadow: inset 0px 0px 0px 1px #c4d9c2 !important;      
-  //   }
-  // `);
   initMessage(global); 
 };
 
 !(() => {
   const global = window.__gs = window.__gs || {};
 
-  if (global.isInit){
-    toggle(global);
-  } else {
-    console.log("[GetSelector]: Injected");
+  if (!global.init) {
+    console.log("[Ollacart Selector]: Started");
     init(global);
-    toggle(global);
+
+    chrome.runtime.sendMessage({type: "init"}, function(response) {
+      console.log(response);
+    });
+    
+    chrome.runtime.onMessage.addListener(
+      function(request, sender, sendResponse) {
+        console.log(request);
+        switch(request.type) {
+          case 'get_state':
+            sendResponse(global.state);
+            break;
+          case 'toggle_state':
+            toggle(global);
+            sendResponse(global.state);
+          case 'ce_id':
+            if (request.ce_id)
+              localStorage.setItem('ce_id', request.ce_id);
+        }
+      }
+    );
   }
 })();
 
