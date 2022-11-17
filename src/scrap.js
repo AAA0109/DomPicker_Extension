@@ -19,7 +19,7 @@ const checkIfSimilarProductContainer = el => {
     if (area < area_limit) continue;
     return true;
   }
-  return false;  
+  return false;
 }
 
 const getProductRootElement = el => {
