@@ -33,8 +33,9 @@ const getProductRootElement = el => {
 }
 
 const isVisible = el => {
-  if (el.style.opacity === '0') return false;
-  if (el.style.visibility == 'hidden') return false;
+  const style = window.getComputedStyle(el);
+  if (style.opacity === '0') return false;
+  if (style.visibility == 'hidden') return false;
   const r = el.getBoundingClientRect();
   if (r.width < 10 || r.height < 10) return false;
   return true;
