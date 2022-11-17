@@ -64,10 +64,14 @@ chrome.action.onClicked.addListener(async (tab) => {
 });
 
 chrome.runtime.onMessage.addListener(
-  function(request, sender, sendResponse) { //sender.tab
+  async function(request, sender, sendResponse) { //sender.tab
     switch(request.type) {
       case 'init':
-        sendResponse({ init: "great" });
+        sendResponse({ type: "init" });
+        break;
+      case 'close':
+        sendResponse({ type: "close" });
+        await updateIcon(false);
         break;
     }
   }

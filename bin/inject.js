@@ -793,6 +793,9 @@ const init = global => {
     
     global.copiedEl = selectedEl;
     global.copiedEl.classList.add("gs_copied");
+
+    toggle(global);
+    global.sendClose();
   };
 
   global.getImageTag = (tag) => {
@@ -849,6 +852,12 @@ const init = global => {
   if (!global.init) {
     console.log("[Ollacart Selector]: Started");
     init(global);
+
+    global.sendClose = () => {
+      chrome.runtime.sendMessage({type: "close"}, function(response) {
+        console.log(response);
+      });  
+    };
 
     chrome.runtime.sendMessage({type: "init"}, function(response) {
       console.log(response);
