@@ -44,7 +44,9 @@ const currentTabChanged = async () => {
 }
 
 chrome.tabs.onUpdated.addListener(async function(tabId, changeInfo, tab) {
-  await currentTabChanged();
+  if (changeInfo.status === 'complete') {
+    await currentTabChanged();
+  }
 });
 
 chrome.tabs.onActivated.addListener(async tab => {
