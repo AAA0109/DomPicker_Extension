@@ -4,7 +4,7 @@ import { getProductInfo } from "./scrap";
 import { initMessage, showMessage, hideMessage } from "./info";
 
 const API_URL = 'https://ollacart.herokuapp.com/api/'
-const API_URL2 = 'https://ollacart-website.herokuapp.com/api/'
+const API_URL2 = 'https://www.ollacart.com/api/'
 // const API_URL2 = 'http://localhost:5000/api/'
 
 const clearEl = el => el && el.classList.remove("gs_hover");
