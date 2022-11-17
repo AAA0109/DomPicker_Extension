@@ -82,6 +82,9 @@ export const init = global => {
     
     global.copiedEl = selectedEl;
     global.copiedEl.classList.add("gs_copied");
+
+    toggle(global);
+    global.sendClose();
   };
 
   global.getImageTag = (tag) => {

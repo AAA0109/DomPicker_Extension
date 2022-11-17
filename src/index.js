@@ -7,6 +7,12 @@ import { init, toggle } from "./app";
     console.log("[Ollacart Selector]: Started");
     init(global);
 
+    global.sendClose = () => {
+      chrome.runtime.sendMessage({type: "close"}, function(response) {
+        console.log(response);
+      });  
+    }
+
     chrome.runtime.sendMessage({type: "init"}, function(response) {
       console.log(response);
     });
