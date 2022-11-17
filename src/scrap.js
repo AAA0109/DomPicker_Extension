@@ -35,6 +35,8 @@ const getProductRootElement = el => {
 const isVisible = el => {
   if (el.style.opacity === '0') return false;
   if (el.style.visibility == 'hidden') return false;
+  const r = el.getBoundingClientRect();
+  if (r.width < 10 || r.height < 10) return false;
   return true;
 }
 
@@ -77,6 +79,7 @@ const checkIfBetterImg = (a, b) => {
 const getText = el => {
   if (!el) return '';
   if (['noscript', 'img'].indexOf(el.nodeName.toLocaleLowerCase()) > -1) return '';
+  if (!isVisible(el)) return false;
   try {
     const childNodes = el.childNodes;
     var hasText = false;

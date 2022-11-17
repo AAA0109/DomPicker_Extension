@@ -555,6 +555,8 @@ const getProductRootElement = el => {
 const isVisible = el => {
   if (el.style.opacity === '0') return false;
   if (el.style.visibility == 'hidden') return false;
+  const r = el.getBoundingClientRect();
+  if (r.width < 10 || r.height < 10) return false;
   return true;
 };
 
@@ -597,6 +599,7 @@ const checkIfBetterImg = (a, b) => {
 const getText = el => {
   if (!el) return '';
   if (['noscript', 'img'].indexOf(el.nodeName.toLocaleLowerCase()) > -1) return '';
+  if (!isVisible(el)) return false;
   try {
     const childNodes = el.childNodes;
     var hasText = false;
@@ -712,7 +715,7 @@ const initMessage = global => {
 };
 
 const API_URL = 'https://ollacart.herokuapp.com/api/';
-const API_URL2 = 'https://ollacart-website.herokuapp.com/api/';
+const API_URL2 = 'https://www.ollacart.com/api/';
 // const API_URL2 = 'http://localhost:5000/api/'
 
 const clearEl = el => el && el.classList.remove("gs_hover");
