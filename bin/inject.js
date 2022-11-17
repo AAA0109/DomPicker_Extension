@@ -518,6 +518,10 @@ const addStyle = style => {
   document.head.appendChild(styleTag);
 };
 
+const Constant = {
+  title: ['title', 'name']
+};
+
 const checkIfSimilarProductContainer = el => {
   const area_limit = 80 * 80, txt_limit_ct = 2;
   var txt_ct = 0;
@@ -554,11 +558,31 @@ const isVisible = el => {
   return true;
 };
 
+const checkIfHasAttribute = (el, attr) => {
+  const keys = el.attributes;
+  for (let i = 0; i < keys.length; i ++) {
+    const key = keys[i].name || '';
+    const value = el.getAttribute(key) || '';
+    if (key.toLocaleLowerCase().includes(attr) || value.toLocaleLowerCase().includes(attr)) return true;
+  }
+  return false;
+};
+
+const checkIfDescendOf = (ch, p, signs) => {
+  while(ch && ch !== p) {
+    for (let i = 0; i < signs.length; i ++)
+      if (checkIfHasAttribute(ch, signs[i]))
+        return true;
+    ch = ch.parentNode;
+  }
+  return false;
+};
+
 const checkIfBetterImg = (a, b) => {
-  if (!isVisible(b)) return false;
-  if (!isVisible(a)) return true;
-  if (!b.src) return false;
-  if (!a.src) return true;
+  if (!isVisible(a)) return false;
+  if (!isVisible(b)) return true;
+  if (!a.src) return false;
+  if (!b.src) return true;
 
   const offset = 2;
   const r1 = a.getBoundingClientRect(), r2 = b.getBoundingClientRect();
@@ -566,8 +590,8 @@ const checkIfBetterImg = (a, b) => {
   if (Math.abs(area1 - area2) < offset * offset) {
     if (Math.abs(r1.x - r2.x) < offset && Math.abs(r1.y - r2.y) < offset) return true;
   }
-  if (area1 > area2) return false;
-  return true;
+  if (area1 > area2) return true;
+  return false;
 };
 
 const getText = el => {
@@ -591,10 +615,14 @@ const getText = el => {
   }
 };
 
-const checkIfBetterTitle = (a, b) => {
+const checkIfBetterTitle = (a, b, p) => {
   const txt1 = getText(a), txt2 = getText(b);
   if (txt1 && !txt2) return true;
   if (!txt1) return false;
+
+  const des1 = checkIfDescendOf(a, p, Constant.title), des2 = checkIfDescendOf(b, p, Constant.title);
+  if (des1 && !des2) return true;
+  if (!des1 && des2) return false;
 
   const fontSize1 = parseFloat(window.getComputedStyle(a).fontSize) || 0,
     fontSize2 = parseFloat(window.getComputedStyle(b).fontSize) || 0;
@@ -620,7 +648,7 @@ const getImgUrl = (el) => {
 
   var ret = imgs[0];
   for (let i = 1; i < imgs.length; i ++) {
-    if (checkIfBetterImg(ret, imgs[i])) ret = imgs[i];
+    if (checkIfBetterImg(imgs[i], ret)) ret = imgs[i];
   }
   return ret.src;
 };
@@ -629,7 +657,7 @@ const getName = (el) => {
   const itms = el.getElementsByTagName("*");
   var ret = itms[0];
   for (let i = 1; i < itms.length; i ++) {
-    if (checkIfBetterTitle(itms[i], ret)) ret = itms[i];
+    if (checkIfBetterTitle(itms[i], ret, el)) ret = itms[i];
   }
   return getText(ret);
 };
@@ -686,6 +714,7 @@ const initMessage = global => {
 const API_URL = 'https://ollacart.herokuapp.com/api/';
 const API_URL2 = 'https://ollacart-website.herokuapp.com/api/';
 // const API_URL2 = 'http://localhost:5000/api/'
+
 const clearEl = el => el && el.classList.remove("gs_hover");
 
 const toggle = global => {
@@ -813,7 +842,7 @@ const init = global => {
 
 !(() => {
   const global = window.__gs = window.__gs || {};
-
+  console.log('[Ollacart] Init', global);
   if (!global.init) {
     console.log("[Ollacart Selector]: Started");
     init(global);

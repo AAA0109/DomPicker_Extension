@@ -2,7 +2,7 @@ import { init, toggle } from "./app";
 
 !(() => {
   const global = window.__gs = window.__gs || {};
-
+  console.log('[Ollacart] Init', global);
   if (!global.init) {
     console.log("[Ollacart Selector]: Started");
     init(global);
