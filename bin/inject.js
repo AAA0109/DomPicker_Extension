@@ -539,7 +539,7 @@ const checkIfSimilarProductContainer = el => {
     if (area < area_limit) continue;
     return true;
   }
-  return false;  
+  return false;
 };
 
 const getProductRootElement = el => {
@@ -581,7 +581,13 @@ const checkIfDescendOf = (ch, p, signs) => {
   return false;
 };
 
-const checkIfBetterImg = (a, b) => {
+const isHovered = (r, e) => {
+  const x = e.clientX, y = e.clientY;
+  if (r.left <= x && r.right >= x && r.top <= y && r.bottom >= y) return true;
+  return false;
+};
+
+const checkIfBetterImg = (a, b, e) => {
   if (!isVisible(a)) return false;
   if (!isVisible(b)) return true;
   if (!a.src) return false;
@@ -591,6 +597,9 @@ const checkIfBetterImg = (a, b) => {
   const r1 = a.getBoundingClientRect(), r2 = b.getBoundingClientRect();
   const area1 = r1.width * r1.height, area2 = r2.width * r2.height;
   if (Math.abs(area1 - area2) < offset * offset) {
+    const h1 = isHovered(r1, e), h2 = isHovered(r2, e);
+    if (h1 && !h2) return true;
+    if (!h1 && h2) return false;
     if (Math.abs(r1.x - r2.x) < offset && Math.abs(r1.y - r2.y) < offset) return true;
   }
   if (area1 > area2) return true;
@@ -644,7 +653,7 @@ const findHref = el => {
   return location.href;
 };
 
-const getImgUrl = (el) => {
+const getImgUrl = (el, e) => {
   if (!el) return '';
   if (el.tagName === 'img') return el.src;
   const imgs = el.getElementsByTagName('img');
@@ -652,7 +661,7 @@ const getImgUrl = (el) => {
 
   var ret = imgs[0];
   for (let i = 1; i < imgs.length; i ++) {
-    if (checkIfBetterImg(imgs[i], ret)) ret = imgs[i];
+    if (checkIfBetterImg(imgs[i], ret, e)) ret = imgs[i];
   }
   return ret.src;
 };
@@ -676,7 +685,7 @@ const getProductInfo = (el, e) => {
   const p = getProductRootElement(el);
   return {
     name: getName(p),
-    img: getImgUrl(p),
+    img: getImgUrl(p, e),
     url: getUrl(e)
   }
 };
