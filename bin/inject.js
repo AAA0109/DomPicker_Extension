@@ -725,8 +725,8 @@ const initMessage = global => {
 };
 
 const API_URL = 'https://ollacart.herokuapp.com/api/';
+// const API_URL = 'http://localhost:5000/api/'
 const API_URL2 = 'https://www.ollacart.com/api/';
-// const API_URL2 = 'http://localhost:5000/api/'
 
 const clearEl = el => el && el.classList.remove("gs_hover");
 
@@ -789,7 +789,7 @@ const init = global => {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ photo: productInfo.img, url: productInfo.url })
+      body: JSON.stringify({ photo: productInfo.img, url: productInfo.url, name: productInfo.name })
     });
     
     fetch(API_URL2 + 'product/create', {

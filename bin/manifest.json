@@ -1,6 +1,6 @@
 {
   "name": "OllaCart",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "manifest_version": 3,
   "description": "Chrome Extension for Ollacart. Add your items to OllaCart.",
   "permissions": ["storage", "tabs", "activeTab"],
