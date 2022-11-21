@@ -701,27 +701,39 @@ const STYLES = `
       background-color: #fff !important;
       border: 4px solid #eee;
       z-index: 999999;
+      width: 300px;
   }
 
   .gs_message.gs_show {
       display: inline-block;
   }
+  .gs_ollacart_img img {
+    width: 100%;
+    max-height: 300px;
+  }
 `;
 
-const showMessage = (global, html) => {
-  global.message.innerHTML = `<b>${html}</b> Click on the items to add to Ollacart`;
-  global.message.classList.toggle("gs_show", true);
+const showMessage = (global, info) => {
+  let html = '';
+  console.log(info);
+  if(info.img && info.name) {
+    html = `<div class="gs_ollacart_img"><img src="${info.img}" /></div><div>${info.name}</div>`;
+  }
+  html += `<p>Go to <a href="https://www.ollacart.com" target="_blank">OllaCart</a></p>`;
+  console.log(html);
+  global.popup.innerHTML = html;
+  global.popup.classList.toggle("gs_show", true);
 };
 
 const hideMessage = global => {
-  global.message.classList.toggle("gs_show", false);
+  global.popup.classList.toggle("gs_show", false);
 };
 
 const initMessage = global => {
   addStyle(STYLES);
-  global.message = document.createElement("div");
-  global.message.className = "gs_message";
-  document.body.appendChild(global.message);
+  global.popup = document.createElement("div");
+  global.popup.className = "gs_message";
+  document.body.appendChild(global.popup);
 };
 
 const API_URL = 'https://ollacart.herokuapp.com/api/';
@@ -761,8 +773,8 @@ const init = global => {
     const selectedEl = global.selectedEl;
     selectedEl.classList.add("gs_hover");
     
-    const message = "message";
-    showMessage(global, message);
+    const productInfo = getProductInfo(selectedEl, e);
+    showMessage(global, productInfo);
   }, 200);
   
   global.domPick = (e) => {
