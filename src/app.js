@@ -40,8 +40,8 @@ export const init = global => {
     const selectedEl = global.selectedEl;
     selectedEl.classList.add("gs_hover");
     
-    const message = "message";
-    showMessage(global, message);
+    const productInfo = getProductInfo(selectedEl, e);
+    showMessage(global, productInfo);
   }, 200);
   
   global.domPick = (e) => {
