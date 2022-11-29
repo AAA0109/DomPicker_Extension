@@ -606,6 +606,10 @@ const checkIfBetterImg = (a, b, e) => {
   return false;
 };
 
+const containsAnyLetters = str => {
+  return /[a-zA-Z]/.test(str);
+};
+
 const getText = el => {
   if (!el) return '';
   if (['noscript', 'img'].indexOf(el.nodeName.toLocaleLowerCase()) > -1) return '';
@@ -615,8 +619,8 @@ const getText = el => {
     var hasText = false;
     for (let i = 0; i < childNodes.length; i++) {
       if (childNodes[i].nodeType === Node.TEXT_NODE) {
-        var txt = childNodes[i].textContent.replace(/\n/g, '');
-        if (!txt) continue;
+        var txt = childNodes[i].textContent;
+        if (!containsAnyLetters(txt)) continue;
         hasText = true;
         break;
       }
