@@ -522,7 +522,7 @@ const Constant = {
   title: ['title', 'name']
 };
 
-const checkIfSimilarProductContainer = el => {
+const checkIfSimilarProductContainer = (el, attrs = []) => {
   const area_limit = 80 * 80, txt_limit_ct = 2;
   var txt_ct = 0;
   const itms = el.getElementsByTagName('*');
@@ -533,20 +533,86 @@ const checkIfSimilarProductContainer = el => {
   if (txt_ct < txt_limit_ct) return false;
 
   const imgs = el.getElementsByTagName('img');
-  for (let i = 0; i < imgs.length; i ++) {
+  let i = 0;
+  for (i = 0; i < imgs.length; i ++) {
     const img = imgs[i];
     const area = img.width * img.height;
     if (area < area_limit) continue;
-    return true;
+    break;
   }
-  return false;
+  if (i === imgs.length) return false;
+  if (!attrs.length) return true;
+
+  const htmlStr = (el.innerHTML || '').toLocaleLowerCase();
+  i = 0;
+  for (i = 0; i < attrs.length; i ++) {
+    let j = 0;
+    for (j = 0; j < attrs[i].length; j ++)
+      if(htmlStr.includes(attrs[i][j]))
+        break;
+    if (j === attrs[i].length) break;
+  }
+
+  if (i && i === attrs.length) return false;
+  return true;
+};
+
+const checkIfSimilarItem = (a, b) => {
+  if (!checkIfSimilarProductContainer(a) || !checkIfSimilarProductContainer(b)) return 0;
+  const tag1 = a.tagName, tag2 = b.tagName;
+  if (tag1.toLocaleLowerCase() !== tag2.toLocaleLowerCase()) return 0;
+  const attr1 = a.attributes, attr2 = b.attributes;
+  let ct = 0;
+  for (let i = 0; i < attr1.length; i ++) {
+    const attr = attr1[i].name || '';
+    if (!attr) continue;
+    let j = 0;
+    for (j = 0; j < attr2.length; j ++) {
+      if (attr2[j].name == attr) break;
+    }
+    if (j === attr2.length) {
+      continue;
+    }
+    ct ++;
+  }
+  let rate = Math.min(((ct * 2) / (attr1.length + attr2.length)) * 1.5, 1);
+  if (attr1.length + attr2.length === 0) rate = 1;
+  return rate;
+};
+
+const checkIfListContainer = el => {
+  const t = 0.9;
+  let p = el.parentNode;
+  while (p && p.parentNode) {
+    const pp = p.parentNode;
+    const chs = pp.children;
+    let ct = 0;
+    for (let i = 0; i < chs.length; i ++) {
+      let max = 0;
+      for (let j = 0; j < chs.length; j ++) {
+        if (i === j) continue;
+        const a = chs[i], b = chs[j];
+        const ret = checkIfSimilarItem(a, b);
+        max = Math.max(max, ret);
+        if (max >= t) break;
+      }
+      if (max < t) ct ++;
+      if (ct > 1) break;
+    }
+    if (ct < 2 && chs.length > 2) return p;
+    p = p.parentNode;
+  }
+  return null;
 };
 
 const getProductRootElement = el => {
-  if (checkIfSimilarProductContainer(el)) return el;
+  const check_list = checkIfListContainer(el);
+  console.log('checkList', check_list);
+  if (check_list) return check_list;
+  if (checkIfSimilarProductContainer(el, [Constant.title])) return el;
   let p = el.parentNode;
   while (p && p.tagName !== 'body') {
-    if (checkIfSimilarProductContainer(p)) return p;
+    if (checkIfSimilarProductContainer(p, [Constant.title])) return p;
     p = p.parentNode;
   }
   return el;
@@ -595,11 +661,12 @@ const checkIfBetterImg = (a, b, e) => {
 
   const offset = 2;
   const r1 = a.getBoundingClientRect(), r2 = b.getBoundingClientRect();
+  const h1 = isHovered(r1, e), h2 = isHovered(r2, e);
+  if (h1 && !h2) return true;
+  if (!h1 && h2) return false;
+
   const area1 = r1.width * r1.height, area2 = r2.width * r2.height;
   if (Math.abs(area1 - area2) < offset * offset) {
-    const h1 = isHovered(r1, e), h2 = isHovered(r2, e);
-    if (h1 && !h2) return true;
-    if (!h1 && h2) return false;
     if (Math.abs(r1.x - r2.x) < offset && Math.abs(r1.y - r2.y) < offset) return true;
   }
   if (area1 > area2) return true;
