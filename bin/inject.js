@@ -553,8 +553,8 @@ const checkIfSimilarProductContainer = (el, attrs = []) => {
     if (j === attrs[i].length) break;
   }
 
-  if (i && i === attrs.length) return false;
-  return true;
+  if (i && i === attrs.length) return true;
+  return false;
 };
 
 const checkIfSimilarItem = (a, b) => {
@@ -656,8 +656,8 @@ const isHovered = (r, e) => {
 const checkIfBetterImg = (a, b, e) => {
   if (!isVisible(a)) return false;
   if (!isVisible(b)) return true;
-  if (!a.src) return false;
-  if (!b.src) return true;
+  if (!a.srcset && !a.src) return false;
+  if (!b.srcset && !b.srt) return true;
 
   const offset = 2;
   const r1 = a.getBoundingClientRect(), r2 = b.getBoundingClientRect();
@@ -726,7 +726,7 @@ const findHref = el => {
 
 const getImgUrl = (el, e) => {
   if (!el) return '';
-  if (el.tagName === 'img') return el.src;
+  if (el.tagName === 'img') return el.srcset || el.src;
   const imgs = el.getElementsByTagName('img');
   if (!imgs.length) return '';
 
@@ -734,7 +734,7 @@ const getImgUrl = (el, e) => {
   for (let i = 1; i < imgs.length; i ++) {
     if (checkIfBetterImg(imgs[i], ret, e)) ret = imgs[i];
   }
-  return ret.src;
+  return ret.srcset || ret.src;
 };
 
 const getName = (el) => {
@@ -756,7 +756,7 @@ const getProductInfo = (el, e) => {
   const p = getProductRootElement(el);
   return {
     name: getName(p),
-    img: getImgUrl(p, e),
+    img: (getImgUrl(p, e) || '').split(' ')[0],
     url: getUrl(e)
   }
 };
