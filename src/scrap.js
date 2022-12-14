@@ -207,7 +207,7 @@ const findHref = el => {
 
 const getImgUrl = (el, e) => {
   if (!el) return '';
-  if (el.tagName === 'img') return el.currentSrc || el.src;
+  if (el.tagName === 'img') return el;
   const imgs = el.getElementsByTagName('img')
   if (!imgs.length) return '';
 
@@ -215,7 +215,7 @@ const getImgUrl = (el, e) => {
   for (let i = 1; i < imgs.length; i ++) {
     if (checkIfBetterImg(imgs[i], ret, e)) ret = imgs[i];
   }
-  return ret.currentSrc || ret.src;
+  return ret;
 }
 
 const getName = (el) => {
@@ -224,7 +224,7 @@ const getName = (el) => {
   for (let i = 1; i < itms.length; i ++) {
     if (checkIfBetterTitle(itms[i], ret, el)) ret = itms[i];
   }
-  return getText(ret);
+  return ret;
 }
 
 const getUrl = (e) => {
@@ -235,9 +235,57 @@ const getUrl = (e) => {
 
 export const getProductInfo = (el, e) => {
   const p = getProductRootElement(el);
+
+  const e_name = getName(p);
+  const e_img = getImgUrl(p, e);
+  const name = getText(e_name);
+  const img = (e_img.currentSrc || e_img.src || '').split(' ')[0];
+  const url = getUrl(e);
   return {
-    name: getName(p),
-    img: (getImgUrl(p, e) || '').split(' ')[0],
-    url: getUrl(e)
+    name,
+    img,
+    url,
+    description: '',
+    price: '',
+    elements: { e_name, e_img }
+  }
+}
+
+export const getProductInfoIndividual = (el, e, global) => {
+  if (!global.productInfo) global.productInfo = {};
+  const productInfo = global.productInfo;
+  if (!productInfo.elements) productInfo.elements = {};
+  if (!productInfo.photos) productInfo.photos = [];
+  if (!productInfo.photos.length) {
+    productInfo.photos.push('');
+    productInfo.elements.photo0 = null;
+  }
+
+  switch(global.selectMode) {
+    case 'img':
+      const e_img = getImgUrl(el, e);
+      const img = (e_img.currentSrc || e_img.src || '').split(' ')[0];
+      productInfo.elements.e_img = e_img;
+      productInfo.img = img;
+      break;
+    case 'name':
+      productInfo.elements.e_name = el;
+      productInfo.name = getText(el);
+      break;
+    case 'description':
+      productInfo.elements.e_description = el;
+      productInfo.description = getText(el);
+      break;
+    case 'price':
+      productInfo.elements.e_price = el;
+      productInfo.price = getText(el);
+      break;
+    case 'photos':
+      const idx = productInfo.photos.length - 1;
+      const e_photo = getImgUrl(el, e);
+      const photo = (e_photo.currentSrc || e_photo.src || '').split(' ')[0];
+      productInfo.elements['photo' + idx] = e_photo
+      productInfo.photos[idx] = photo;
+      break;
   }
 }
