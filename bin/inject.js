@@ -656,8 +656,8 @@ const isHovered = (r, e) => {
 const checkIfBetterImg = (a, b, e) => {
   if (!isVisible(a)) return false;
   if (!isVisible(b)) return true;
-  if (!a.srcset && !a.src) return false;
-  if (!b.srcset && !b.srt) return true;
+  if (!a.currentSrc && !a.src) return false;
+  if (!b.currentSrc && !b.srt) return true;
 
   const offset = 2;
   const r1 = a.getBoundingClientRect(), r2 = b.getBoundingClientRect();
@@ -726,7 +726,7 @@ const findHref = el => {
 
 const getImgUrl = (el, e) => {
   if (!el) return '';
-  if (el.tagName === 'img') return el.srcset || el.src;
+  if (el.tagName === 'img') return el;
   const imgs = el.getElementsByTagName('img');
   if (!imgs.length) return '';
 
@@ -734,7 +734,7 @@ const getImgUrl = (el, e) => {
   for (let i = 1; i < imgs.length; i ++) {
     if (checkIfBetterImg(imgs[i], ret, e)) ret = imgs[i];
   }
-  return ret.srcset || ret.src;
+  return ret;
 };
 
 const getName = (el) => {
@@ -743,7 +743,7 @@ const getName = (el) => {
   for (let i = 1; i < itms.length; i ++) {
     if (checkIfBetterTitle(itms[i], ret, el)) ret = itms[i];
   }
-  return getText(ret);
+  return ret;
 };
 
 const getUrl = (e) => {
@@ -754,10 +754,58 @@ const getUrl = (e) => {
 
 const getProductInfo = (el, e) => {
   const p = getProductRootElement(el);
+
+  const e_name = getName(p);
+  const e_img = getImgUrl(p, e);
+  const name = getText(e_name);
+  const img = (e_img.currentSrc || e_img.src || '').split(' ')[0];
+  const url = getUrl(e);
   return {
-    name: getName(p),
-    img: (getImgUrl(p, e) || '').split(' ')[0],
-    url: getUrl(e)
+    name,
+    img,
+    url,
+    description: '',
+    price: '',
+    elements: { e_name, e_img }
+  }
+};
+
+const getProductInfoIndividual = (el, e, global) => {
+  if (!global.productInfo) global.productInfo = {};
+  const productInfo = global.productInfo;
+  if (!productInfo.elements) productInfo.elements = {};
+  if (!productInfo.photos) productInfo.photos = [];
+  if (!productInfo.photos.length) {
+    productInfo.photos.push('');
+    productInfo.elements.photo0 = null;
+  }
+
+  switch(global.selectMode) {
+    case 'img':
+      const e_img = getImgUrl(el, e);
+      const img = (e_img.currentSrc || e_img.src || '').split(' ')[0];
+      productInfo.elements.e_img = e_img;
+      productInfo.img = img;
+      break;
+    case 'name':
+      productInfo.elements.e_name = el;
+      productInfo.name = getText(el);
+      break;
+    case 'description':
+      productInfo.elements.e_description = el;
+      productInfo.description = getText(el);
+      break;
+    case 'price':
+      productInfo.elements.e_price = el;
+      productInfo.price = getText(el);
+      break;
+    case 'photos':
+      const idx = productInfo.photos.length - 1;
+      const e_photo = getImgUrl(el, e);
+      const photo = (e_photo.currentSrc || e_photo.src || '').split(' ')[0];
+      productInfo.elements['photo' + idx] = e_photo;
+      productInfo.photos[idx] = photo;
+      break;
   }
 };
 
@@ -782,16 +830,126 @@ const STYLES = `
     width: 100%;
     max-height: 300px;
   }
+  .gs_name_price {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    font-size: 16px;
+    color: black;
+  }
+  .gs_description {
+    font-size: 14px;
+    margin-top: 10px;
+  }
+  .gs_message_over, .gs_message_finish {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -20px;
+    background-color: orangered;
+    color: white;
+    text-align: center;
+    padding: 8px 0;
+    font-size: 20px;
+    font-weight: bold;
+    white-space: nowrap;
+  }
+  .gs_message_mask {
+    position: absolute;
+    left: 0;
+    top: 0;
+    top: 0;
+    bottom: 0;
+    background-color: orangered;
+    opacity: 0.4;
+  }
+  .gs_message_finish {
+    top: 35%;
+    padding: 20px 0;
+  }
+  .gs_addtional_photos {
+    margin-top: 5px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .gs_addtional_photos div {
+    width: 46px;
+    height: 60px;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid blue;
+  }
+  .gs_addtional_photos img {
+    width: 100%;
+  }
+
+  .gs_manual_select_tools {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+  }
+  .gs_btn {
+    padding: 4px 10px;
+    background-color: orangered;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  .gs_btn:hover {
+    opacity: 0.8;
+  }
+  .gs_btn:active {
+    opacity: 0.7;
+  }
+  .gs_btn.gs_direct {
+    padding: 4px 14px;
+  }
 `;
 
-const showMessage = (global, info) => {
-  let html = '';
+const manualSelect = {
+  img: 'Logo Image',
+  name: 'Title',
+  price: 'Price',
+  description: 'Description',
+  photos: 'Images'
+};
+
+const showMessage = (global) => {
+  const info = global.productInfo;
   console.log(info);
-  if(info.img && info.name) {
-    html = `<div class="gs_ollacart_img"><img src="${info.img}" /></div><div>${info.name}</div>`;
+  let html = `<div class="gs_ollacart_img"><img src="${info.img}" /></div>`;
+  html += `<div class="gs_name_price"><span>${info.name}</span><span>${info.price || ''}</span></div>`;
+  if (info.description) html += `<div class="gs_description">${info.description}</div>`;
+  for (let i = 0; info.photos && (i < info.photos.length); i ++ ) {
+    if (i === 0) html += `<div class="gs_addtional_photos">`;
+    if (info.photos[i])
+    html += `<div><img src="${info.photos[i]}"/></div>`;
+    if (i === info.photos.length - 1) html += `</div>`;
   }
+  
   html += `<p>Go to <a href="https://www.ollacart.com" target="_blank">OllaCart</a></p>`;
-  console.log(html);
+
+  if (global.selectMode) {
+    html += `<div class="gs_manual_select_tools">
+        <div class="gs_btn gs_direct" tag="gs__prev"><</div>
+        <div class="gs_btn" tag="gs__finish">Finish</div>
+        <div class="gs_btn gs_direct" tag="gs__next">></div>
+      </div>`;
+  }
+  
+  if (global.selectMode) {
+    html += `<div class="gs_message_over">Select Manual ${manualSelect[global.selectMode]}</div>`;
+  } else {
+    html += `<div class="gs_message_over">Auto Select</div>`;
+  }
+
+  if (global.finish) html += `<div class="gs_message_mask"></div>`;
+  if (global.finish) html += `<div class="gs_message_finish">Added to OllaCart</div>`;
+  
   global.popup.innerHTML = html;
   global.popup.classList.toggle("gs_show", true);
 };
@@ -807,15 +965,44 @@ const initMessage = global => {
   document.body.appendChild(global.popup);
 };
 
-const API_URL = 'https://ollacart.herokuapp.com/api/';
-// const API_URL = 'http://localhost:5000/api/'
-const API_URL2 = 'https://www.ollacart.com/api/';
-
 const clearEl = el => el && el.classList.remove("gs_hover");
+const clearClass = (cl) => {
+  const itms = document.getElementsByClassName(cl);
+  for (let i = itms.length - 1 ; i >= 0; i --) itms[i].classList.remove(cl);
+};
+const addClass = (obj, cl) => {
+  const itms = Object.keys(obj).map(key => obj[key]);
+  for (let i = 0 ; i < itms.length; i ++) {
+    if (!itms[i]) continue;
+    itms[i].classList.add(cl);
+  }
+};
+
+const copyToTemp = (global) => {
+  global.tempInfo = {
+    ...global.productInfo,
+    elements: {...(global.productInfo.elements || {})},
+    photos: [...(global.productInfo.photos || [])]
+  };
+};
+const copyFromTemp = (global, key) => {
+  global.productInfo = {
+    ...global.tempInfo,
+    elements: {...(global.tempInfo.elements || {})},
+    photos: [...(global.tempInfo.photos || [])]
+  };
+  // if (key === 'photos') {
+  //   global.productInfo.photos = [(global.tempInfo.photos || [])];
+  // } else {
+  //   global.productInfo[key] = global.tempInfo[key];
+  // }
+  // global.productInfo.elements = {...(global.tempInfo.elements)};
+};
 
 const toggle = global => {
   const state = !global.state;
   global.state = state;
+  global.selectMode = null;
   const action = state ? "addEventListener" : "removeEventListener";
   document[action]("mouseover", global.selectElement);
   document[action]("mouseout", global.clearElDebounce);
@@ -824,7 +1011,7 @@ const toggle = global => {
 
   if (!state) {
     clearEl(global.selectedEl);
-    global.copiedEl && global.copiedEl.classList.remove("gs_copied");
+    clearClass('gs_copied');
     hideMessage(global);
   }
 };
@@ -833,10 +1020,57 @@ const init = global => {
   global.init = true;
   global.state = false;
   global.selectedEl = null;
+  global.selectMode = null;
+  global.productInfo = {};
+  global.tempInfo = {};
+  global.items = ['img', 'name', 'price', 'description', 'photos'];
   
   global.clearElDebounce = debounce_1(() => clearEl(global.selectedEl) && hideMessage(global), 200);
+
+  global.sendAPI = () => {
+    const productInfo = global.productInfo;
+    if (!productInfo.img || !productInfo.name) return;
+    
+    // fetch(API_URL + 'extension/create', {
+    //   method: 'POST',
+    //   headers: {
+    //     'Accept': 'application/json',
+    //     'Content-Type': 'application/json'
+    //   },
+    //   body: JSON.stringify({ photo: productInfo.img, url: productInfo.url, name: productInfo.name })
+    // });
+    
+    // fetch(API_URL2 + 'product/create', {
+    //   method: 'POST',
+    //   headers: {
+    //     'Accept': 'application/json',
+    //     'Content-Type': 'application/json'
+    //   },
+    //   body: JSON.stringify({ photo: productInfo.img, url: productInfo.url, name: productInfo.name, ce_id: localStorage.getItem('ce_id') || '' })
+    // });
+  };
+
+  global.popupBtnClicked = (attr) => {
+    copyFromTemp(global);
+    if (attr === 'gs__finish') {
+      global.sendAPI();
+      global.selectMode = '';
+      global.finish = true;
+      setTimeout(() => { global.finish = false; showMessage(global); }, 3000);
+      showMessage(global);
+      return;
+    }
+    let idx = global.items.indexOf(global.selectMode);
+    if (attr === 'gs__prev') idx --;
+    if (attr === 'gs__next') idx ++;
+    if (idx < 0) idx = 0;
+    if (idx >= global.items.length) idx = global.items.length - 1;
+    global.selectMode = global.items[idx];
+    showMessage(global);
+  };
   
   global.selectElement = debounce_1(e => {
+    if (global.finish || !global.popup || global.popup.contains(e.target)) return;
     if (global.selectedEl !== e.target) {
       clearEl(global.selectedEl);
     }
@@ -844,11 +1078,22 @@ const init = global => {
     const selectedEl = global.selectedEl;
     selectedEl.classList.add("gs_hover");
     
-    const productInfo = getProductInfo(selectedEl, e);
-    showMessage(global, productInfo);
+    if (!global.selectMode) {
+      global.productInfo = getProductInfo(selectedEl, e);
+    } else {
+      getProductInfoIndividual(selectedEl, e, global);
+    }
+    showMessage(global);
   }, 200);
   
   global.domPick = (e) => {
+    if (global.finish || !global.popup) return;
+    if (global.popup.contains(e.target)) {
+      const attr = e.target.getAttribute('tag');
+      if (attr === 'gs__prev' || attr === 'gs__next' || attr === 'gs__finish')
+        global.popupBtnClicked(attr);
+      return ;
+    }
     if (e) {
       e.preventDefault();
       e.stopPropagation();
@@ -856,39 +1101,35 @@ const init = global => {
     
     const { selectedEl } = global;
     if (!selectedEl) return;
-    global.copiedEl && global.copiedEl.classList.remove("gs_copied");
+    
+    clearClass('gs_copied');
+    if (!global.selectMode) global.productInfo = getProductInfo(selectedEl, e);
+    addClass(global.productInfo.elements, 'gs_copied');
     clearEl(selectedEl);
-
-    const productInfo = getProductInfo(selectedEl, e);
-    console.log(productInfo);
+    copyToTemp(global);
+    console.log(global.productInfo);
     
-    // const imgTag = global.getImageTag(selectedEl);
-    // if (!imgTag) return ;    
-    if (!productInfo.img || !productInfo.name) return;
+    if (global.selectMode) {
+      let idx = global.items.indexOf(global.selectMode) + 1;
+      if (global.selectMode === 'photos') {
+        global.productInfo.elements['photo' + global.productInfo.photos.length] = null;
+        global.productInfo.photos.push('');
+        idx --;
+      }
+      global.selectMode = global.items[idx];
+      showMessage(global);
+      return ;
+    }
+    if (confirm("Do you want to select the information manually?")) {
+      global.selectMode = 'img';
+      showMessage(global);
+      return;
+    }
     
-    fetch(API_URL + 'extension/create', {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ photo: productInfo.img, url: productInfo.url, name: productInfo.name })
-    });
+    global.sendAPI();
     
-    fetch(API_URL2 + 'product/create', {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ photo: productInfo.img, url: productInfo.url, name: productInfo.name, ce_id: localStorage.getItem('ce_id') || '' })
-    });
-    
-    global.copiedEl = selectedEl;
-    global.copiedEl.classList.add("gs_copied");
-
-    toggle(global);
-    global.sendClose();
+    // toggle(global);
+    // global.sendClose();
   };
 
   global.getImageTag = (tag) => {
@@ -931,7 +1172,7 @@ const init = global => {
     }
 
     .gs_copied {
-      border: 2px solid #cdcdcd !important;
+      border: 3px solid #ff0a00 !important;
       background: repeating-linear-gradient( 135deg, rgba(183, 240, 200, 0.3), rgba(192, 231, 194, 0.3) 10px, rgba(124, 189, 126, 0.3) 10px, rgba(137, 180, 129, 0.3) 20px ) !important;
       box-shadow: inset 0px 0px 0px 1px #c4d9c2 !important;      
     }
