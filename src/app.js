@@ -1,7 +1,7 @@
 import debounce from "lodash/debounce";
 import { addStyle } from "./addStyle";
 import { getProductInfo, getProductInfoIndividual } from "./scrap";
-import { initMessage, showMessage, hideMessage } from "./info";
+import { initMessage, showMessage, showConfirm, hideMessage, hideConfirm } from "./info";
 
 const API_URL = 'https://ollacart.herokuapp.com/api/'
 // const API_URL = 'http://localhost:5000/api/'
@@ -27,18 +27,19 @@ const copyToTemp = (global) => {
     photos: [...(global.productInfo.photos || [])]
   }
 }
-const copyFromTemp = (global, key) => {
+const copyFromTemp = (global) => {
+  const keys = Object.keys(global.productInfo);
+  let i = 0;
+  for (i = 0; i < keys.length; i ++)
+    if (global.productInfo[keys[i]] !== global.tempInfo[keys[i]])
+      break;
+  if (i === keys.length) return;
   global.productInfo = {
     ...global.tempInfo,
-    elements: {...(global.tempInfo.elements || {})},
-    photos: [...(global.tempInfo.photos || [])]
+    // elements: {...(global.tempInfo.elements || {})},
+    // photos: [...(global.tempInfo.photos || [])]
   }
-  // if (key === 'photos') {
-  //   global.productInfo.photos = [(global.tempInfo.photos || [])];
-  // } else {
-  //   global.productInfo[key] = global.tempInfo[key];
-  // }
-  // global.productInfo.elements = {...(global.tempInfo.elements)};
+  showMessage(global);
 }
 
 export const toggle = global => {
@@ -55,6 +56,7 @@ export const toggle = global => {
     clearEl(global.selectedEl);
     clearClass('gs_copied');
     hideMessage(global);
+    hideConfirm(global);
   }
 };
 
@@ -94,12 +96,23 @@ export const init = global => {
 
   global.popupBtnClicked = (attr) => {
     copyFromTemp(global);
-    if (attr === 'gs__finish') {
+    if (attr === 'gs__confirm') {
       global.sendAPI();
-      global.selectMode = '';
-      global.finish = true;
-      setTimeout(() => { global.finish = false; showMessage(global) }, 3000);
+      // toggle(global);
+      // global.sendClose();
+      // global.finish = true;
+      // setTimeout(() => { global.finish = false; }, 3000);
+      return;
+    }
+    if (attr === 'gs__manual') {
+      hideConfirm(global);
+      global.selectMode = 'img';
       showMessage(global);
+      return;
+    }
+    if (attr === 'gs__finish') {
+      global.selectMode = '';
+      showConfirm(global);
       return;
     }
     let idx = global.items.indexOf(global.selectMode);
@@ -112,7 +125,12 @@ export const init = global => {
   }
   
   global.selectElement = debounce(e => {
-    if (global.finish || !global.popup || global.popup.contains(e.target)) return;
+    if (e.target.tagName.toLocaleLowerCase() === 'html') return;
+    if (global.finish || !global.popup || global.confirm.contains(e.target)) return;
+    if (global.popup.contains(e.target)) {
+      copyFromTemp(global);
+      return;
+    }
     if (global.selectedEl !== e.target) {
       clearEl(global.selectedEl);
     }
@@ -129,16 +147,13 @@ export const init = global => {
   }, 200);
   
   global.domPick = (e) => {
+    if (e.target.tagName.toLocaleLowerCase() === 'html') return;
     if (global.finish || !global.popup) return;
-    if (global.popup.contains(e.target)) {
+    if (global.popup.contains(e.target) || global.confirm.contains(e.target)) {
       const attr = e.target.getAttribute('tag')
-      if (attr === 'gs__prev' || attr === 'gs__next' || attr === 'gs__finish')
+      if (attr)
         global.popupBtnClicked(attr);
       return ;
-    }
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
     }
     
     const { selectedEl } = global;
@@ -162,16 +177,7 @@ export const init = global => {
       showMessage(global);
       return ;
     }
-    if (confirm("Do you want to select the information manually?")) {
-      global.selectMode = 'img';
-      showMessage(global);
-      return;
-    }
-    
-    global.sendAPI();
-    
-    // toggle(global);
-    // global.sendClose();
+    showConfirm(global);
   };
 
   global.getImageTag = (tag) => {
