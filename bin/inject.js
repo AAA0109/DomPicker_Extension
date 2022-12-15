@@ -519,7 +519,9 @@ const addStyle = style => {
 };
 
 const Constant = {
-  title: ['title', 'name']
+  title: ['title', 'name'],
+  price: ['price'],
+  description: ['description', 'detail', 'info']
 };
 
 const checkIfSimilarProductContainer = (el, attrs = []) => {
@@ -611,7 +613,7 @@ const getProductRootElement = el => {
   if (check_list) return check_list;
   if (checkIfSimilarProductContainer(el, [Constant.title])) return el;
   let p = el.parentNode;
-  while (p && p.tagName !== 'body') {
+  while (p && p.tagName.toLocaleLowerCase() !== 'body') {
     if (checkIfSimilarProductContainer(p, [Constant.title])) return p;
     p = p.parentNode;
   }
@@ -692,11 +694,16 @@ const getText = el => {
         break;
       }
     }
-    if (hasText) return (el.innerText || e.textContent).replace(/\n/g, '');
+    if (hasText) return (el.innerText || el.textContent || '').replace(/\n/g, '');
     return ''
   } catch (e) {
     return '';
   }
+};
+
+const getFText = el => {
+  if (!el) return '';
+  return (el.innerText || el.textContent || '').replace(/\n\n/g, '\n');
 };
 
 const checkIfBetterTitle = (a, b, p) => {
@@ -715,10 +722,36 @@ const checkIfBetterTitle = (a, b, p) => {
   return false;
 };
 
+const checkIfBetterPrice = (a, b, p) => {
+  const txt1 = getText(a), txt2 = getText(b);
+  const isPrice1 = checkIfPrice(txt1), isPrice2 = checkIfPrice(txt2);
+  if (isPrice1 && !isPrice2) return true;
+  if (!isPrice1) return false;
+  
+  const des1 = checkIfDescendOf(a, p, Constant.price), des2 = checkIfDescendOf(b, p, Constant.price);
+  if (des1 && !des2) return true;
+  if (!des1 && des2) return false;
+
+  return false;
+};
+
+const checkIfBetterDescription = (a, b, p) => {
+  const txt1 = getText(a), txt2 = getText(b);
+  if (txt1 && !txt2) return true;
+  if (!txt1) return false;
+
+  const des1 = checkIfDescendOf(a, p, Constant.description), des2 = checkIfDescendOf(b, p, Constant.description);
+  if (des1 && !des2) return true;
+  if (!des1 && des2) return false;
+  
+  if (txt1.length > txt2.length) return true;
+  return false;
+};
+
 const findHref = el => {
   var p = el;
-  while(p && p.tagName !== 'body') {
-    if ((p.tagName === 'a' || p.tagName === 'button') && p.href) return p.href;
+  while(p && p.tagName.toLocaleLowerCase() !== 'body') {
+    if ((p.tagName.toLocaleLowerCase() === 'a' || p.tagName.toLocaleLowerCase === 'button') && p.href) return p.href;
     p = p.parentNode;
   }
   return location.href;
@@ -726,7 +759,7 @@ const findHref = el => {
 
 const getImgUrl = (el, e) => {
   if (!el) return '';
-  if (el.tagName === 'img') return el;
+  if (el.tagName.toLocaleLowerCase() === 'img') return el;
   const imgs = el.getElementsByTagName('img');
   if (!imgs.length) return '';
 
@@ -737,11 +770,59 @@ const getImgUrl = (el, e) => {
   return ret;
 };
 
+const getManualImgUrl = (el, e) => {
+  while(el.tagName !== 'body') {
+    const img = getImgUrl(el, e);
+    if (img) return img;
+    el = el.parentNode;
+  }
+  return null;
+};
+
 const getName = (el) => {
   const itms = el.getElementsByTagName("*");
   var ret = itms[0];
   for (let i = 1; i < itms.length; i ++) {
     if (checkIfBetterTitle(itms[i], ret, el)) ret = itms[i];
+  }
+  return ret;
+};
+
+const checkIfPrice = (p) => {
+  if (!p) return false;
+  let d = p.replace(/ |\n|,/g, '');
+  d = d.replace('$', '');
+  if (!d) return false;
+  for (let i = 0; i < d.length; i ++) if (d[i] !== '.' && !(d[i] >= '0' && d[i] <= '9')) return false;
+  return true;
+};
+
+const getPrice = (el) => {
+  const itms = el.getElementsByTagName("*");
+  var ret = itms[0];
+  for (let i = 1; i < itms.length; i ++) {
+    if (checkIfBetterPrice(itms[i], ret, el)) ret = itms[i];
+  }
+  return ret;
+};
+
+const getDescriptin = (el) => {
+  const itms = el.getElementsByTagName("*");
+  var ret = itms[0];
+  for (let i = 1; i < itms.length; i ++) {
+    if (checkIfBetterDescription(itms[i], ret, el)) ret = itms[i];
+  }
+  return ret;
+};
+
+const getPhotos = (el) => {
+  const ret = [];
+  const itms = el.getElementsByTagName("img");
+  for (let i = 0; i < itms.length; i ++) {
+    const r = itms[i].getBoundingClientRect();
+    if (r.width * r.height >= 6400) {
+      ret.push(itms[i]);
+    }
   }
   return ret;
 };
@@ -755,18 +836,29 @@ const getUrl = (e) => {
 const getProductInfo = (el, e) => {
   const p = getProductRootElement(el);
 
-  const e_name = getName(p);
   const e_img = getImgUrl(p, e);
+  const e_name = getName(p);
+  const e_price = getPrice(p);
+  const e_description = getDescriptin(p);
+  const e_photos = getPhotos(p);
   const name = getText(e_name);
   const img = (e_img.currentSrc || e_img.src || '').split(' ')[0];
   const url = getUrl(e);
+  const price = getText(e_price);
+  const description = getText(e_description);
+  const r_photos = {};
+  const photos = e_photos.map((p, idx) => {
+    r_photos['photo' + idx] = p;
+    return (p.currentSrc || p.src || '').split(' ')[0]
+  });
   return {
     name,
     img,
     url,
-    description: '',
-    price: '',
-    elements: { e_name, e_img }
+    description,
+    price,
+    photos,
+    elements: { e_name, e_img, e_price, e_description, ...r_photos }
   }
 };
 
@@ -782,26 +874,27 @@ const getProductInfoIndividual = (el, e, global) => {
 
   switch(global.selectMode) {
     case 'img':
-      const e_img = getImgUrl(el, e);
+      console.log(el);
+      const e_img = getManualImgUrl(el, e);
       const img = (e_img.currentSrc || e_img.src || '').split(' ')[0];
       productInfo.elements.e_img = e_img;
       productInfo.img = img;
       break;
     case 'name':
       productInfo.elements.e_name = el;
-      productInfo.name = getText(el);
+      productInfo.name = getFText(el);
       break;
     case 'description':
       productInfo.elements.e_description = el;
-      productInfo.description = getText(el);
+      productInfo.description = getFText(el);
       break;
     case 'price':
       productInfo.elements.e_price = el;
-      productInfo.price = getText(el);
+      productInfo.price = getFText(el);
       break;
     case 'photos':
       const idx = productInfo.photos.length - 1;
-      const e_photo = getImgUrl(el, e);
+      const e_photo = getManualImgUrl(el, e);
       const photo = (e_photo.currentSrc || e_photo.src || '').split(' ')[0];
       productInfo.elements['photo' + idx] = e_photo;
       productInfo.photos[idx] = photo;
@@ -810,25 +903,62 @@ const getProductInfoIndividual = (el, e, global) => {
 };
 
 const STYLES = `
+  .gs_confirm_container {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: #ff450040;
+    z-index: 99999999;
+    display: none;
+  }
+  .gs_confirm_container.gs_hide {
+    opacity: 0;
+    transition: opacity 3s;
+    transition-delay: 1s;
+  }
+  .gs_message, .gs_confirm {
+    position: fixed;
+    box-shadow: 0 2px 3px 0 rgba(0, 0, 0, 0.25);
+    padding: 30px 10px 8px;
+    background-color: #fff !important;
+    border: 4px solid #eee;
+  }
+  .gs_confirm {
+    left: calc(50vw - 350px);
+    top: 100px;
+    width: 700px;
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  @media screen and (max-width: 768px) {
+    .gs_confirm {
+      width: 290px;
+      left: calc(50vw - 150px);
+    }
+  }
   .gs_message {
-      position: fixed;
-      left: 10px;
-      bottom: 10px;
-      box-shadow: 0 2px 3px 0 rgba(0, 0, 0, 0.25);
-      padding: 8px 10px;
-      display: none;
-      background-color: #fff !important;
-      border: 4px solid #eee;
-      z-index: 999999;
-      width: 300px;
+    display: none;
+    left: 10px;
+    bottom: 10px;
+    z-index: 9999999;
+    width: 300px;
+    min-height: 250px;
+    flex-direction: column;
   }
 
-  .gs_message.gs_show {
-      display: inline-block;
+  .gs_message.gs_show { display: flex; }
+  .gs_confirm_container.gs_show {
+    display: inline-block;
   }
   .gs_ollacart_img img {
     width: 100%;
     max-height: 300px;
+  }
+  .gs_confirm .gs_ollacart_img {
+    width: 300px;
   }
   .gs_name_price {
     display: flex;
@@ -836,6 +966,11 @@ const STYLES = `
     flex-wrap: wrap;
     font-size: 16px;
     color: black;
+  }
+  .gs_confirm .gs_name_price {
+    font-size: 20px;
+    font-weight: bold;
+    color: #303030;
   }
   .gs_description {
     font-size: 14px;
@@ -856,14 +991,14 @@ const STYLES = `
   }
   .gs_message_mask {
     position: absolute;
-    left: 0;
-    top: 0;
-    top: 0;
-    bottom: 0;
-    background-color: orangered;
-    opacity: 0.4;
+    left: -4px;
+    right: -4px;
+    top: -4px;
+    bottom: -4px;
+    background-color: #ff450040;
   }
   .gs_message_finish {
+    font-size: 30px;
     top: 35%;
     padding: 20px 0;
   }
@@ -887,8 +1022,18 @@ const STYLES = `
   }
 
   .gs_manual_select_tools {
+    flex-grow: 1;
     display: flex;
+    align-items: flex-end;
     justify-content: space-between;
+    margin-top: 10px;
+  }
+  .gs_confirm_tools {
+    display: flex;
+    gap: 15px;
+    justify-content: flex-end;
+    align-items: flex-end;
+    flex-grow: 1;
     margin-top: 10px;
   }
   .gs_btn {
@@ -898,6 +1043,7 @@ const STYLES = `
     font-size: 16px;
     font-weight: bold;
     cursor: pointer;
+    border-radius: 7px;
   }
   .gs_btn:hover {
     opacity: 0.8;
@@ -907,6 +1053,16 @@ const STYLES = `
   }
   .gs_btn.gs_direct {
     padding: 4px 14px;
+  }
+
+  .gs_confirm_right {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    width: 1px;
+  }
+  .gs_text_center {
+    text-align: center;
   }
 `;
 
@@ -921,17 +1077,23 @@ const manualSelect = {
 const showMessage = (global) => {
   const info = global.productInfo;
   console.log(info);
-  let html = `<div class="gs_ollacart_img"><img src="${info.img}" /></div>`;
-  html += `<div class="gs_name_price"><span>${info.name}</span><span>${info.price || ''}</span></div>`;
-  if (info.description) html += `<div class="gs_description">${info.description}</div>`;
-  for (let i = 0; info.photos && (i < info.photos.length); i ++ ) {
-    if (i === 0) html += `<div class="gs_addtional_photos">`;
-    if (info.photos[i])
-    html += `<div><img src="${info.photos[i]}"/></div>`;
-    if (i === info.photos.length - 1) html += `</div>`;
+  let html = '';
+  if (!global.selectMode || global.selectMode === 'img') html += `<div class="gs_ollacart_img"><img src="${info.img}" /></div>`;
+  if (!global.selectMode || global.selectMode === 'name' || global.selectMode === 'price') {
+    html += `<div class="gs_name_price">`;
+    if (!global.selectMode || global.selectMode === 'name') html += `<span>${info.name}</span>`;
+    if (!global.selectMode || global.selectMode === 'price') html += `<span>${info.price || ''}</span>`;
+    html += `</div>`;
   }
-  
-  html += `<p>Go to <a href="https://www.ollacart.com" target="_blank">OllaCart</a></p>`;
+  if (!global.selectMode || global.selectMode === 'description') html += `<div class="gs_description">${info.description}</div>`;
+  if (!global.selectMode || global.selectMode === 'photos') {
+    for (let i = 0; info.photos && (i < info.photos.length); i ++ ) {
+      if (i === 0) html += `<div class="gs_addtional_photos">`;
+      if (info.photos[i])
+      html += `<div><img src="${info.photos[i]}"/></div>`;
+      if (i === info.photos.length - 1) html += `</div>`;
+    }
+  }
 
   if (global.selectMode) {
     html += `<div class="gs_manual_select_tools">
@@ -946,16 +1108,50 @@ const showMessage = (global) => {
   } else {
     html += `<div class="gs_message_over">Auto Select</div>`;
   }
-
-  if (global.finish) html += `<div class="gs_message_mask"></div>`;
-  if (global.finish) html += `<div class="gs_message_finish">Added to OllaCart</div>`;
   
   global.popup.innerHTML = html;
   global.popup.classList.toggle("gs_show", true);
 };
 
+const showConfirm = global => {
+  hideMessage(global);
+
+  const info = global.productInfo;
+  console.log(info);
+  let html = `<div class="gs_ollacart_img"><img src="${info.img}" /></div>`;
+  html += `<div class="gs_confirm_right"><div class="gs_name_price"><span>${info.name}</span><span>${info.price || ''}</span></div>`;
+  if (info.description) html += `<div class="gs_description">${info.description}</div>`;
+  for (let i = 0; info.photos && (i < info.photos.length); i ++ ) {
+    if (i === 0) html += `<div class="gs_addtional_photos">`;
+    if (info.photos[i])
+    html += `<div><img src="${info.photos[i]}"/></div>`;
+    if (i === info.photos.length - 1) html += `</div>`;
+  }
+  
+  html += `<p class="gs_text_center">Go to <a href="https://www.ollacart.com" target="_blank">OllaCart</a></p>`;
+  html += `<div class="gs_confirm_tools">
+            <div class="gs_btn" tag="gs__confirm">Looks Correct</div>
+            <div class="gs_btn" tag="gs__manual">Manual Select</div>
+          </div>`;
+
+  html += '</div>';
+  html += `<div class="gs_message_over">You selected item</div>`;
+
+  if (global.finish) html += `<div class="gs_message_mask"><div class="gs_message_finish">Added to OllaCart</div></div>`;
+
+  global.confirm.innerHTML = `<div class="gs_confirm">${html}</div>`;
+  global.confirm.classList.toggle("gs_show", true);
+
+  if (global.finish) global.confirm.classList.toggle("gs_hide", true);
+  else global.confirm.classList.toggle("gs_hide", false);
+};
+
 const hideMessage = global => {
   global.popup.classList.toggle("gs_show", false);
+};
+
+const hideConfirm = global => {
+  global.confirm.classList.toggle("gs_show", false);
 };
 
 const initMessage = global => {
@@ -963,7 +1159,14 @@ const initMessage = global => {
   global.popup = document.createElement("div");
   global.popup.className = "gs_message";
   document.body.appendChild(global.popup);
+
+  global.confirm = document.createElement("div");
+  global.confirm.className = "gs_confirm_container";
+  document.body.appendChild(global.confirm);
 };
+
+// const API_URL2 = 'http://localhost:5000/api/'
+const API_URL2 = 'https://ollacart-dev.herokuapp.com/api/';
 
 const clearEl = el => el && el.classList.remove("gs_hover");
 const clearClass = (cl) => {
@@ -985,18 +1188,19 @@ const copyToTemp = (global) => {
     photos: [...(global.productInfo.photos || [])]
   };
 };
-const copyFromTemp = (global, key) => {
+const copyFromTemp = (global) => {
+  const keys = Object.keys(global.productInfo);
+  let i = 0;
+  for (i = 0; i < keys.length; i ++)
+    if (global.productInfo[keys[i]] !== global.tempInfo[keys[i]])
+      break;
+  if (i === keys.length) return;
   global.productInfo = {
     ...global.tempInfo,
-    elements: {...(global.tempInfo.elements || {})},
-    photos: [...(global.tempInfo.photos || [])]
+    // elements: {...(global.tempInfo.elements || {})},
+    // photos: [...(global.tempInfo.photos || [])]
   };
-  // if (key === 'photos') {
-  //   global.productInfo.photos = [(global.tempInfo.photos || [])];
-  // } else {
-  //   global.productInfo[key] = global.tempInfo[key];
-  // }
-  // global.productInfo.elements = {...(global.tempInfo.elements)};
+  showMessage(global);
 };
 
 const toggle = global => {
@@ -1013,6 +1217,7 @@ const toggle = global => {
     clearEl(global.selectedEl);
     clearClass('gs_copied');
     hideMessage(global);
+    hideConfirm(global);
   }
 };
 
@@ -1030,6 +1235,9 @@ const init = global => {
   global.sendAPI = () => {
     const productInfo = global.productInfo;
     if (!productInfo.img || !productInfo.name) return;
+
+    const { name, url, price, description, photos } = productInfo;
+    const photo = productInfo.img;
     
     // fetch(API_URL + 'extension/create', {
     //   method: 'POST',
@@ -1037,27 +1245,41 @@ const init = global => {
     //     'Accept': 'application/json',
     //     'Content-Type': 'application/json'
     //   },
-    //   body: JSON.stringify({ photo: productInfo.img, url: productInfo.url, name: productInfo.name })
+    //   body: JSON.stringify({ photo, url, name })
     // });
     
-    // fetch(API_URL2 + 'product/create', {
-    //   method: 'POST',
-    //   headers: {
-    //     'Accept': 'application/json',
-    //     'Content-Type': 'application/json'
-    //   },
-    //   body: JSON.stringify({ photo: productInfo.img, url: productInfo.url, name: productInfo.name, ce_id: localStorage.getItem('ce_id') || '' })
-    // });
+    fetch(API_URL2 + 'product/create', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ photo, url, name, price, description, photos, ce_id: localStorage.getItem('ce_id') || '' })
+    });
   };
 
   global.popupBtnClicked = (attr) => {
     copyFromTemp(global);
-    if (attr === 'gs__finish') {
+    if (attr === 'gs__confirm') {
       global.sendAPI();
-      global.selectMode = '';
       global.finish = true;
-      setTimeout(() => { global.finish = false; showMessage(global); }, 3000);
+      showConfirm(global);
+      setTimeout(() => { 
+        global.finish = false;
+        toggle(global);
+        global.sendClose();
+      }, 5000);
+      return;
+    }
+    if (attr === 'gs__manual') {
+      hideConfirm(global);
+      global.selectMode = 'img';
       showMessage(global);
+      return;
+    }
+    if (attr === 'gs__finish') {
+      global.selectMode = '';
+      showConfirm(global);
       return;
     }
     let idx = global.items.indexOf(global.selectMode);
@@ -1070,7 +1292,12 @@ const init = global => {
   };
   
   global.selectElement = debounce_1(e => {
-    if (global.finish || !global.popup || global.popup.contains(e.target)) return;
+    if (e.target.tagName.toLocaleLowerCase() === 'html') return;
+    if (global.finish || !global.popup || global.confirm.contains(e.target)) return;
+    if (global.popup.contains(e.target)) {
+      copyFromTemp(global);
+      return;
+    }
     if (global.selectedEl !== e.target) {
       clearEl(global.selectedEl);
     }
@@ -1087,16 +1314,13 @@ const init = global => {
   }, 200);
   
   global.domPick = (e) => {
+    if (e.target.tagName.toLocaleLowerCase() === 'html') return;
     if (global.finish || !global.popup) return;
-    if (global.popup.contains(e.target)) {
+    if (global.popup.contains(e.target) || global.confirm.contains(e.target)) {
       const attr = e.target.getAttribute('tag');
-      if (attr === 'gs__prev' || attr === 'gs__next' || attr === 'gs__finish')
+      if (attr)
         global.popupBtnClicked(attr);
       return ;
-    }
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
     }
     
     const { selectedEl } = global;
@@ -1120,24 +1344,7 @@ const init = global => {
       showMessage(global);
       return ;
     }
-    if (confirm("Do you want to select the information manually?")) {
-      global.selectMode = 'img';
-      showMessage(global);
-      return;
-    }
-    
-    global.sendAPI();
-    
-    // toggle(global);
-    // global.sendClose();
-  };
-
-  global.getImageTag = (tag) => {
-    if (!tag) return ;
-    if (tag.tagName === 'img') return tag;
-    const imgs = tag.getElementsByTagName('img');
-    if (!imgs.length) return;
-    return imgs[0];
+    showConfirm(global);
   };
 
   global.disableClick = (e) => {
