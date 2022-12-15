@@ -11,6 +11,11 @@ const STYLES = `
     z-index: 99999999;
     display: none;
   }
+  .gs_confirm_container.gs_hide {
+    opacity: 0;
+    transition: opacity 3s;
+    transition-delay: 1s;
+  }
   .gs_message, .gs_confirm {
     position: fixed;
     box-shadow: 0 2px 3px 0 rgba(0, 0, 0, 0.25);
@@ -34,14 +39,16 @@ const STYLES = `
   }
   .gs_message {
     display: none;
-    position: fixed;
     left: 10px;
     bottom: 10px;
     z-index: 9999999;
     width: 300px;
+    min-height: 250px;
+    flex-direction: column;
   }
 
-  .gs_message.gs_show, .gs_confirm_container.gs_show {
+  .gs_message.gs_show { display: flex; }
+  .gs_confirm_container.gs_show {
     display: inline-block;
   }
   .gs_ollacart_img img {
@@ -82,14 +89,14 @@ const STYLES = `
   }
   .gs_message_mask {
     position: absolute;
-    left: 0;
-    top: 0;
-    top: 0;
-    bottom: 0;
-    background-color: orangered;
-    opacity: 0.4;
+    left: -4px;
+    right: -4px;
+    top: -4px;
+    bottom: -4px;
+    background-color: #ff450040;
   }
   .gs_message_finish {
+    font-size: 30px;
     top: 35%;
     padding: 20px 0;
   }
@@ -113,7 +120,9 @@ const STYLES = `
   }
 
   .gs_manual_select_tools {
+    flex-grow: 1;
     display: flex;
+    align-items: flex-end;
     justify-content: space-between;
     margin-top: 10px;
   }
@@ -197,9 +206,6 @@ export const showMessage = (global) => {
   } else {
     html += `<div class="gs_message_over">Auto Select</div>`;
   }
-
-  if (global.finish) html += `<div class="gs_message_mask"></div>`;
-  if (global.finish) html += `<div class="gs_message_finish">Added to OllaCart</div>`;
   
   global.popup.innerHTML = html;
   global.popup.classList.toggle("gs_show", true);
@@ -229,11 +235,13 @@ export const showConfirm = global => {
   html += '</div>';
   html += `<div class="gs_message_over">You selected item</div>`;
 
-  if (global.finish) html += `<div class="gs_message_mask"></div>`;
-  if (global.finish) html += `<div class="gs_message_finish">Added to OllaCart</div>`;
+  if (global.finish) html += `<div class="gs_message_mask"><div class="gs_message_finish">Added to OllaCart</div></div>`;
 
   global.confirm.innerHTML = `<div class="gs_confirm">${html}</div>`;
   global.confirm.classList.toggle("gs_show", true);
+
+  if (global.finish) global.confirm.classList.toggle("gs_hide", true);
+  else global.confirm.classList.toggle("gs_hide", false);
 }
 
 export const hideMessage = global => {

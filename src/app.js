@@ -4,8 +4,8 @@ import { getProductInfo, getProductInfoIndividual } from "./scrap";
 import { initMessage, showMessage, showConfirm, hideMessage, hideConfirm } from "./info";
 
 const API_URL = 'https://ollacart.herokuapp.com/api/'
-// const API_URL = 'http://localhost:5000/api/'
-const API_URL2 = 'https://ollacart-dev.herokuapp.com/api/'
+const API_URL2 = 'http://localhost:5000/api/'
+// const API_URL2 = 'https://ollacart-dev.herokuapp.com/api/'
 
 const clearEl = el => el && el.classList.remove("gs_hover");
 const clearClass = (cl) => {
@@ -74,6 +74,9 @@ export const init = global => {
   global.sendAPI = () => {
     const productInfo = global.productInfo;
     if (!productInfo.img || !productInfo.name) return;
+
+    const { name, url, price, description, photos } = productInfo;
+    const photo = productInfo.img;
     
     // fetch(API_URL + 'extension/create', {
     //   method: 'POST',
@@ -81,27 +84,30 @@ export const init = global => {
     //     'Accept': 'application/json',
     //     'Content-Type': 'application/json'
     //   },
-    //   body: JSON.stringify({ photo: productInfo.img, url: productInfo.url, name: productInfo.name })
+    //   body: JSON.stringify({ photo, url, name })
     // });
     
-    // fetch(API_URL2 + 'product/create', {
-    //   method: 'POST',
-    //   headers: {
-    //     'Accept': 'application/json',
-    //     'Content-Type': 'application/json'
-    //   },
-    //   body: JSON.stringify({ photo: productInfo.img, url: productInfo.url, name: productInfo.name, ce_id: localStorage.getItem('ce_id') || '' })
-    // });
+    fetch(API_URL2 + 'product/create', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ photo, url, name, price, description, photos, ce_id: localStorage.getItem('ce_id') || '' })
+    });
   }
 
   global.popupBtnClicked = (attr) => {
     copyFromTemp(global);
     if (attr === 'gs__confirm') {
       global.sendAPI();
-      // toggle(global);
-      // global.sendClose();
-      // global.finish = true;
-      // setTimeout(() => { global.finish = false; }, 3000);
+      global.finish = true;
+      showConfirm(global);
+      setTimeout(() => { 
+        global.finish = false;
+        toggle(global);
+        global.sendClose();
+      }, 5000);
       return;
     }
     if (attr === 'gs__manual') {
@@ -179,14 +185,6 @@ export const init = global => {
     }
     showConfirm(global);
   };
-
-  global.getImageTag = (tag) => {
-    if (!tag) return ;
-    if (tag.tagName === 'img') return tag;
-    const imgs = tag.getElementsByTagName('img')
-    if (!imgs.length) return;
-    return imgs[0];
-  }
 
   global.disableClick = (e) => {
     if(global.state) {

@@ -1,5 +1,7 @@
 const Constant = {
-  title: ['title', 'name']
+  title: ['title', 'name'],
+  price: ['price'],
+  description: ['description', 'detail', 'info']
 }
 
 const checkIfSimilarProductContainer = (el, attrs = []) => {
@@ -92,7 +94,7 @@ const getProductRootElement = el => {
   if (check_list) return check_list;
   if (checkIfSimilarProductContainer(el, [Constant.title])) return el;
   let p = el.parentNode;
-  while (p && p.tagName !== 'body') {
+  while (p && p.tagName.toLocaleLowerCase() !== 'body') {
     if (checkIfSimilarProductContainer(p, [Constant.title])) return p;
     p = p.parentNode;
   }
@@ -173,7 +175,7 @@ const getText = el => {
         break;
       }
     }
-    if (hasText) return (el.innerText || e.textContent).replace(/\n/g, '');
+    if (hasText) return (el.innerText || el.textContent || '').replace(/\n/g, '');
     return ''
   } catch (e) {
     return '';
@@ -182,7 +184,7 @@ const getText = el => {
 
 const getFText = el => {
   if (!el) return '';
-  return (el.innerText || e.textContent).replace(/\n\n/g, '\n');
+  return (el.innerText || el.textContent || '').replace(/\n\n/g, '\n');
 }
 
 const checkIfBetterTitle = (a, b, p) => {
@@ -201,10 +203,36 @@ const checkIfBetterTitle = (a, b, p) => {
   return false;
 }
 
+const checkIfBetterPrice = (a, b, p) => {
+  const txt1 = getText(a), txt2 = getText(b);
+  const isPrice1 = checkIfPrice(txt1), isPrice2 = checkIfPrice(txt2);
+  if (isPrice1 && !isPrice2) return true;
+  if (!isPrice1) return false;
+  
+  const des1 = checkIfDescendOf(a, p, Constant.price), des2 = checkIfDescendOf(b, p, Constant.price)
+  if (des1 && !des2) return true;
+  if (!des1 && des2) return false;
+
+  return false;
+}
+
+const checkIfBetterDescription = (a, b, p) => {
+  const txt1 = getText(a), txt2 = getText(b);
+  if (txt1 && !txt2) return true;
+  if (!txt1) return false;
+
+  const des1 = checkIfDescendOf(a, p, Constant.description), des2 = checkIfDescendOf(b, p, Constant.description)
+  if (des1 && !des2) return true;
+  if (!des1 && des2) return false;
+  
+  if (txt1.length > txt2.length) return true;
+  return false;
+}
+
 const findHref = el => {
   var p = el;
-  while(p && p.tagName !== 'body') {
-    if ((p.tagName === 'a' || p.tagName === 'button') && p.href) return p.href;
+  while(p && p.tagName.toLocaleLowerCase() !== 'body') {
+    if ((p.tagName.toLocaleLowerCase() === 'a' || p.tagName.toLocaleLowerCase === 'button') && p.href) return p.href;
     p = p.parentNode;
   }
   return location.href;
@@ -212,7 +240,7 @@ const findHref = el => {
 
 const getImgUrl = (el, e) => {
   if (!el) return '';
-  if (el.tagName === 'img') return el;
+  if (el.tagName.toLocaleLowerCase() === 'img') return el;
   const imgs = el.getElementsByTagName('img')
   if (!imgs.length) return '';
 
@@ -223,11 +251,59 @@ const getImgUrl = (el, e) => {
   return ret;
 }
 
+const getManualImgUrl = (el, e) => {
+  while(el.tagName !== 'body') {
+    const img = getImgUrl(el, e);
+    if (img) return img;
+    el = el.parentNode;
+  }
+  return null;
+}
+
 const getName = (el) => {
   const itms = el.getElementsByTagName("*");
   var ret = itms[0];
   for (let i = 1; i < itms.length; i ++) {
     if (checkIfBetterTitle(itms[i], ret, el)) ret = itms[i];
+  }
+  return ret;
+}
+
+const checkIfPrice = (p) => {
+  if (!p) return false;
+  let d = p.replace(/ |\n|,/g, '');
+  d = d.replace('$', '');
+  if (!d) return false;
+  for (let i = 0; i < d.length; i ++) if (d[i] !== '.' && !(d[i] >= '0' && d[i] <= '9')) return false;
+  return true;
+}
+
+const getPrice = (el) => {
+  const itms = el.getElementsByTagName("*");
+  var ret = itms[0];
+  for (let i = 1; i < itms.length; i ++) {
+    if (checkIfBetterPrice(itms[i], ret, el)) ret = itms[i];
+  }
+  return ret;
+}
+
+const getDescriptin = (el) => {
+  const itms = el.getElementsByTagName("*");
+  var ret = itms[0];
+  for (let i = 1; i < itms.length; i ++) {
+    if (checkIfBetterDescription(itms[i], ret, el)) ret = itms[i];
+  }
+  return ret;
+}
+
+const getPhotos = (el) => {
+  const ret = [];
+  const itms = el.getElementsByTagName("img");
+  for (let i = 0; i < itms.length; i ++) {
+    const r = itms[i].getBoundingClientRect();
+    if (r.width * r.height >= 6400) {
+      ret.push(itms[i]);
+    }
   }
   return ret;
 }
@@ -241,18 +317,29 @@ const getUrl = (e) => {
 export const getProductInfo = (el, e) => {
   const p = getProductRootElement(el);
 
-  const e_name = getName(p);
   const e_img = getImgUrl(p, e);
+  const e_name = getName(p);
+  const e_price = getPrice(p);
+  const e_description = getDescriptin(p);
+  const e_photos = getPhotos(p);
   const name = getText(e_name);
   const img = (e_img.currentSrc || e_img.src || '').split(' ')[0];
   const url = getUrl(e);
+  const price = getText(e_price);
+  const description = getText(e_description);
+  const r_photos = {};
+  const photos = e_photos.map((p, idx) => {
+    r_photos['photo' + idx] = p;
+    return (p.currentSrc || p.src || '').split(' ')[0]
+  })
   return {
     name,
     img,
     url,
-    description: '',
-    price: '',
-    elements: { e_name, e_img }
+    description,
+    price,
+    photos,
+    elements: { e_name, e_img, e_price, e_description, ...r_photos }
   }
 }
 
@@ -268,7 +355,8 @@ export const getProductInfoIndividual = (el, e, global) => {
 
   switch(global.selectMode) {
     case 'img':
-      const e_img = getImgUrl(el, e);
+      console.log(el);
+      const e_img = getManualImgUrl(el, e);
       const img = (e_img.currentSrc || e_img.src || '').split(' ')[0];
       productInfo.elements.e_img = e_img;
       productInfo.img = img;
@@ -287,7 +375,7 @@ export const getProductInfoIndividual = (el, e, global) => {
       break;
     case 'photos':
       const idx = productInfo.photos.length - 1;
-      const e_photo = getImgUrl(el, e);
+      const e_photo = getManualImgUrl(el, e);
       const photo = (e_photo.currentSrc || e_photo.src || '').split(' ')[0];
       productInfo.elements['photo' + idx] = e_photo
       productInfo.photos[idx] = photo;
