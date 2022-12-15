@@ -180,6 +180,11 @@ const getText = el => {
   }
 }
 
+const getFText = el => {
+  if (!el) return '';
+  return (el.innerText || e.textContent).replace(/\n\n/g, '\n');
+}
+
 const checkIfBetterTitle = (a, b, p) => {
   const txt1 = getText(a), txt2 = getText(b);
   if (txt1 && !txt2) return true;
@@ -270,15 +275,15 @@ export const getProductInfoIndividual = (el, e, global) => {
       break;
     case 'name':
       productInfo.elements.e_name = el;
-      productInfo.name = getText(el);
+      productInfo.name = getFText(el);
       break;
     case 'description':
       productInfo.elements.e_description = el;
-      productInfo.description = getText(el);
+      productInfo.description = getFText(el);
       break;
     case 'price':
       productInfo.elements.e_price = el;
-      productInfo.price = getText(el);
+      productInfo.price = getFText(el);
       break;
     case 'photos':
       const idx = productInfo.photos.length - 1;
