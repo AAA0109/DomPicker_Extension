@@ -97,7 +97,7 @@ export const init = global => {
     });
   }
 
-  global.popupBtnClicked = (attr) => {
+  global.popupBtnClicked = (attr, target) => {
     copyFromTemp(global);
     if (attr === 'gs__confirm') {
       global.sendAPI();
@@ -119,6 +119,21 @@ export const init = global => {
     if (attr === 'gs__finish') {
       global.selectMode = '';
       showConfirm(global);
+      return;
+    }
+    if (attr === 'gs__remove') {
+      const t = parseInt(target) || 0;
+      for (let i = t; i < global.productInfo.photos.length - 1; i ++) {
+        global.productInfo.photos[i] = global.productInfo.photos[i + 1]
+        global.productInfo.elements['photo' + i] = global.productInfo.elements['photo' + (i + 1)];
+      }
+      if (global.productInfo.photos.length) {
+        global.productInfo.photos.pop();
+        delete global.productInfo.elements['photo' + global.productInfo.photos.length];
+      }
+      copyToTemp(global);
+      if (global.showConfirm) showConfirm(global);
+      else showMessage(global);
       return;
     }
     let idx = global.items.indexOf(global.selectMode);
@@ -157,8 +172,9 @@ export const init = global => {
     if (global.finish || !global.popup) return;
     if (global.popup.contains(e.target) || global.confirm.contains(e.target)) {
       const attr = e.target.getAttribute('tag')
+      const target = e.target.getAttribute('target') || ''
       if (attr)
-        global.popupBtnClicked(attr);
+        global.popupBtnClicked(attr, target);
       return ;
     }
     
