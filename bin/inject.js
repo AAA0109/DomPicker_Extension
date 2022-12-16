@@ -676,7 +676,7 @@ const checkIfBetterImg = (a, b, e) => {
 };
 
 const containsAnyLetters = str => {
-  return /[a-zA-Z]/.test(str);
+  return /[a-zA-Z0-9]/.test(str);
 };
 
 const getText = el => {
@@ -718,7 +718,7 @@ const checkIfBetterTitle = (a, b, p) => {
   const fontSize1 = parseFloat(window.getComputedStyle(a).fontSize) || 0,
     fontSize2 = parseFloat(window.getComputedStyle(b).fontSize) || 0;
   
-  if (fontSize1 > fontSize2) return true;
+  if (fontSize1 > fontSize2 * 1.1) return true;
   return false;
 };
 
@@ -740,9 +740,9 @@ const checkIfBetterDescription = (a, b, p) => {
   if (txt1 && !txt2) return true;
   if (!txt1) return false;
 
-  const des1 = checkIfDescendOf(a, p, Constant.description), des2 = checkIfDescendOf(b, p, Constant.description);
-  if (des1 && !des2) return true;
-  if (!des1 && des2) return false;
+  // const des1 = checkIfDescendOf(a, p, Constant.description), des2 = checkIfDescendOf(b, p, Constant.description)
+  // if (des1 && !des2) return true;
+  // if (!des1 && des2) return false;
   
   if (txt1.length > txt2.length) return true;
   return false;
@@ -1008,7 +1008,8 @@ const STYLES = `
     flex-wrap: wrap;
     gap: 10px;
   }
-  .gs_addtional_photos div {
+  .gs_addtional_photos>div {
+    position: relative;
     width: 46px;
     height: 60px;
     overflow: hidden;
@@ -1016,6 +1017,35 @@ const STYLES = `
     justify-content: center;
     align-items: center;
     border: 1px solid blue;
+  }
+  .gs_addtional_photos .gs_remove_photo {
+    transform: translateY(100%);
+    opacity: 0;
+    transition: all .3s;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: #000000A0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .gs_addtional_photos>div:hover .gs_remove_photo {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  .gs_addtional_photos .gs_remove_photo .gs_remove_btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 30px;
+    font-weight: bold;
+    background-color: rgb(200, 200, 200);
+    color: black;
   }
   .gs_addtional_photos img {
     width: 100%;
@@ -1067,7 +1097,7 @@ const STYLES = `
 `;
 
 const manualSelect = {
-  img: 'Logo Image',
+  img: 'Main Logo',
   name: 'Title',
   price: 'Price',
   description: 'Description',
@@ -1090,7 +1120,7 @@ const showMessage = (global) => {
     for (let i = 0; info.photos && (i < info.photos.length); i ++ ) {
       if (i === 0) html += `<div class="gs_addtional_photos">`;
       if (info.photos[i])
-      html += `<div><img src="${info.photos[i]}"/></div>`;
+      html += `<div><img src="${info.photos[i]}"/><div class="gs_remove_photo"><div class="gs_remove_btn" tag="gs__remove" target="${i}">-</div></div></div>`;
       if (i === info.photos.length - 1) html += `</div>`;
     }
   }
@@ -1104,7 +1134,7 @@ const showMessage = (global) => {
   }
   
   if (global.selectMode) {
-    html += `<div class="gs_message_over">Select Manual ${manualSelect[global.selectMode]}</div>`;
+    html += `<div class="gs_message_over">Select ${manualSelect[global.selectMode]}</div>`;
   } else {
     html += `<div class="gs_message_over">Auto Select</div>`;
   }
@@ -1124,7 +1154,7 @@ const showConfirm = global => {
   for (let i = 0; info.photos && (i < info.photos.length); i ++ ) {
     if (i === 0) html += `<div class="gs_addtional_photos">`;
     if (info.photos[i])
-    html += `<div><img src="${info.photos[i]}"/></div>`;
+    html += `<div><img src="${info.photos[i]}"/><div class="gs_remove_photo"><div class="gs_remove_btn" tag="gs__remove" target="${i}">-</div></div></div>`;
     if (i === info.photos.length - 1) html += `</div>`;
   }
   
@@ -1141,6 +1171,7 @@ const showConfirm = global => {
 
   global.confirm.innerHTML = `<div class="gs_confirm">${html}</div>`;
   global.confirm.classList.toggle("gs_show", true);
+  global.showConfirm = true;
 
   if (global.finish) global.confirm.classList.toggle("gs_hide", true);
   else global.confirm.classList.toggle("gs_hide", false);
@@ -1152,6 +1183,7 @@ const hideMessage = global => {
 
 const hideConfirm = global => {
   global.confirm.classList.toggle("gs_show", false);
+  global.showConfirm = false;
 };
 
 const initMessage = global => {
@@ -1258,7 +1290,7 @@ const init = global => {
     });
   };
 
-  global.popupBtnClicked = (attr) => {
+  global.popupBtnClicked = (attr, target) => {
     copyFromTemp(global);
     if (attr === 'gs__confirm') {
       global.sendAPI();
@@ -1280,6 +1312,21 @@ const init = global => {
     if (attr === 'gs__finish') {
       global.selectMode = '';
       showConfirm(global);
+      return;
+    }
+    if (attr === 'gs__remove') {
+      const t = parseInt(target) || 0;
+      for (let i = t; i < global.productInfo.photos.length - 1; i ++) {
+        global.productInfo.photos[i] = global.productInfo.photos[i + 1];
+        global.productInfo.elements['photo' + i] = global.productInfo.elements['photo' + (i + 1)];
+      }
+      if (global.productInfo.photos.length) {
+        global.productInfo.photos.pop();
+        delete global.productInfo.elements['photo' + global.productInfo.photos.length];
+      }
+      copyToTemp(global);
+      if (global.showConfirm) showConfirm(global);
+      else showMessage(global);
       return;
     }
     let idx = global.items.indexOf(global.selectMode);
@@ -1318,8 +1365,9 @@ const init = global => {
     if (global.finish || !global.popup) return;
     if (global.popup.contains(e.target) || global.confirm.contains(e.target)) {
       const attr = e.target.getAttribute('tag');
+      const target = e.target.getAttribute('target') || '';
       if (attr)
-        global.popupBtnClicked(attr);
+        global.popupBtnClicked(attr, target);
       return ;
     }
     

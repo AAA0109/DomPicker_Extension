@@ -157,7 +157,7 @@ const checkIfBetterImg = (a, b, e) => {
 }
 
 const containsAnyLetters = str => {
-  return /[a-zA-Z]/.test(str);
+  return /[a-zA-Z0-9]/.test(str);
 }
 
 const getText = el => {
@@ -199,7 +199,7 @@ const checkIfBetterTitle = (a, b, p) => {
   const fontSize1 = parseFloat(window.getComputedStyle(a).fontSize) || 0,
     fontSize2 = parseFloat(window.getComputedStyle(b).fontSize) || 0;
   
-  if (fontSize1 > fontSize2) return true;
+  if (fontSize1 > fontSize2 * 1.1) return true;
   return false;
 }
 
@@ -221,9 +221,9 @@ const checkIfBetterDescription = (a, b, p) => {
   if (txt1 && !txt2) return true;
   if (!txt1) return false;
 
-  const des1 = checkIfDescendOf(a, p, Constant.description), des2 = checkIfDescendOf(b, p, Constant.description)
-  if (des1 && !des2) return true;
-  if (!des1 && des2) return false;
+  // const des1 = checkIfDescendOf(a, p, Constant.description), des2 = checkIfDescendOf(b, p, Constant.description)
+  // if (des1 && !des2) return true;
+  // if (!des1 && des2) return false;
   
   if (txt1.length > txt2.length) return true;
   return false;
