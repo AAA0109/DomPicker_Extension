@@ -90,7 +90,6 @@ const checkIfListContainer = el => {
 
 const getProductRootElement = el => {
   const check_list = checkIfListContainer(el);
-  console.log('checkList', check_list);
   if (check_list) return check_list;
   if (checkIfSimilarProductContainer(el, [Constant.title])) return el;
   let p = el.parentNode;
@@ -229,13 +228,13 @@ const checkIfBetterDescription = (a, b, p) => {
   return false;
 }
 
-const findHref = el => {
+export const findHref = el => {
   var p = el;
   while(p && p.tagName.toLocaleLowerCase() !== 'body') {
     if ((p.tagName.toLocaleLowerCase() === 'a' || p.tagName.toLocaleLowerCase === 'button') && p.href) return p.href;
     p = p.parentNode;
   }
-  return location.href;
+  return '';
 }
 
 const getImgUrl = (el, e) => {
@@ -355,7 +354,6 @@ export const getProductInfoIndividual = (el, e, global) => {
 
   switch(global.selectMode) {
     case 'img':
-      console.log(el);
       const e_img = getManualImgUrl(el, e);
       const img = (e_img.currentSrc || e_img.src || '').split(' ')[0];
       productInfo.elements.e_img = e_img;

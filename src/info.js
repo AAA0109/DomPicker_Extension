@@ -8,28 +8,35 @@ const STYLES = `
     width: 100vw;
     height: 100vh;
     background-color: #ff450040;
-    z-index: 99999999;
+    z-index: 9999999999999;
     display: none;
   }
   .gs_confirm_container.gs_hide {
     opacity: 0;
     transition: opacity 3s;
-    transition-delay: 1s;
+    transition-delay: 3s;
   }
   .gs_message, .gs_confirm {
     position: fixed;
     box-shadow: 0 2px 3px 0 rgba(0, 0, 0, 0.25);
-    padding: 30px 10px 8px;
+    padding: 20px 10px 8px;
     background-color: #fff !important;
     border: 4px solid #eee;
   }
   .gs_confirm {
     left: calc(50vw - 350px);
-    top: 100px;
+    top: 80px;
+  }
+  .gs_hide .gs_confirm {
+    display: none;
+  }
+  .gs_confirm_content {
     width: 700px;
+    max-height: calc(100vh - 150px);
+    overflow-y: auto;
     display: flex;
     gap: 20px;
-    flex-wrap: wrap;
+    flex-wrap: wrap;    
   }
   @media screen and (max-width: 768px) {
     .gs_confirm {
@@ -41,14 +48,18 @@ const STYLES = `
     display: none;
     left: 10px;
     bottom: 10px;
-    z-index: 9999999;
+    z-index: 999999999999;
     width: 300px;
+  }
+  .gs_message_content {
+    display: flex;
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
     min-height: 250px;
     flex-direction: column;
   }
 
-  .gs_message.gs_show { display: flex; }
-  .gs_confirm_container.gs_show {
+  .gs_confirm_container.gs_show, .gs_message.gs_show {
     display: inline-block;
   }
   .gs_ollacart_img img {
@@ -97,8 +108,8 @@ const STYLES = `
   }
   .gs_message_finish {
     font-size: 30px;
-    top: 35%;
-    padding: 20px 0;
+    top: calc(50% - 100px);
+    padding: 50px 0;
   }
   .gs_addtional_photos {
     margin-top: 5px;
@@ -192,6 +203,19 @@ const STYLES = `
   .gs_text_center {
     text-align: center;
   }
+
+  .gs_confirm_content::-webkit-scrollbar, .gs_message_content::-webkit-scrollbar {
+    width: 7px;
+  }
+  .gs_confirm_content::-webkit-scrollbar-track, .gs_message_content::-webkit-scrollbar-track {
+    background: #f1f1f1; 
+  }
+  .gs_confirm_content::-webkit-scrollbar-thumb, .gs_message_content::-webkit-scrollbar-thumb {
+    background: #e19b9b; 
+  }
+  .gs_confirm_content::-webkit-scrollbar-thumb:hover, .gs_message_content::-webkit-scrollbar-thumb:hover {
+    background: #e19b9bd0; 
+  }
 `;
 
 const manualSelect = {
@@ -204,8 +228,7 @@ const manualSelect = {
 
 export const showMessage = (global) => {
   const info = global.productInfo;
-  console.log(info);
-  let html = '';
+  let html = '<div class="gs_message_content">';
   if (!global.selectMode || global.selectMode === 'img') html += `<div class="gs_ollacart_img"><img src="${info.img}" /></div>`;
   if (!global.selectMode || global.selectMode === 'name' || global.selectMode === 'price') {
     html += `<div class="gs_name_price">`;
@@ -230,6 +253,7 @@ export const showMessage = (global) => {
         <div class="gs_btn gs_direct" tag="gs__next">></div>
       </div>`
   }
+  html += `</div>`;
   
   if (global.selectMode) {
     html += `<div class="gs_message_over">Select ${manualSelect[global.selectMode]}</div>`
@@ -245,8 +269,8 @@ export const showConfirm = global => {
   hideMessage(global);
 
   const info = global.productInfo;
-  console.log(info);
-  let html = `<div class="gs_ollacart_img"><img src="${info.img}" /></div>`;
+  let html = `<div class="gs_confirm"><div class="gs_confirm_content">`
+  html += `<div class="gs_ollacart_img"><img src="${info.img}" /></div>`;
   html += `<div class="gs_confirm_right"><div class="gs_name_price"><span>${info.name}</span><span>${info.price || ''}</span></div>`;
   if (info.description) html += `<div class="gs_description">${info.description}</div>`
   for (let i = 0; info.photos && (i < info.photos.length); i ++ ) {
@@ -262,12 +286,13 @@ export const showConfirm = global => {
             <div class="gs_btn" tag="gs__manual">Manual Select</div>
           </div>`
 
-  html += '</div>';
+  html += '</div></div>';
   html += `<div class="gs_message_over">You selected item</div>`;
+  html += `</div>`
 
-  if (global.finish) html += `<div class="gs_message_mask"><div class="gs_message_finish">Added to OllaCart</div></div>`;
+  if (global.finish) html += `<div class="gs_message_finish">Added to OllaCart</div>`;
 
-  global.confirm.innerHTML = `<div class="gs_confirm">${html}</div>`;
+  global.confirm.innerHTML = html;
   global.confirm.classList.toggle("gs_show", true);
   global.showConfirm = true;
 

@@ -609,7 +609,6 @@ const checkIfListContainer = el => {
 
 const getProductRootElement = el => {
   const check_list = checkIfListContainer(el);
-  console.log('checkList', check_list);
   if (check_list) return check_list;
   if (checkIfSimilarProductContainer(el, [Constant.title])) return el;
   let p = el.parentNode;
@@ -754,7 +753,7 @@ const findHref = el => {
     if ((p.tagName.toLocaleLowerCase() === 'a' || p.tagName.toLocaleLowerCase === 'button') && p.href) return p.href;
     p = p.parentNode;
   }
-  return location.href;
+  return '';
 };
 
 const getImgUrl = (el, e) => {
@@ -874,7 +873,6 @@ const getProductInfoIndividual = (el, e, global) => {
 
   switch(global.selectMode) {
     case 'img':
-      console.log(el);
       const e_img = getManualImgUrl(el, e);
       const img = (e_img.currentSrc || e_img.src || '').split(' ')[0];
       productInfo.elements.e_img = e_img;
@@ -910,28 +908,35 @@ const STYLES = `
     width: 100vw;
     height: 100vh;
     background-color: #ff450040;
-    z-index: 99999999;
+    z-index: 9999999999999;
     display: none;
   }
   .gs_confirm_container.gs_hide {
     opacity: 0;
     transition: opacity 3s;
-    transition-delay: 1s;
+    transition-delay: 3s;
   }
   .gs_message, .gs_confirm {
     position: fixed;
     box-shadow: 0 2px 3px 0 rgba(0, 0, 0, 0.25);
-    padding: 30px 10px 8px;
+    padding: 20px 10px 8px;
     background-color: #fff !important;
     border: 4px solid #eee;
   }
   .gs_confirm {
     left: calc(50vw - 350px);
-    top: 100px;
+    top: 80px;
+  }
+  .gs_hide .gs_confirm {
+    display: none;
+  }
+  .gs_confirm_content {
     width: 700px;
+    max-height: calc(100vh - 150px);
+    overflow-y: auto;
     display: flex;
     gap: 20px;
-    flex-wrap: wrap;
+    flex-wrap: wrap;    
   }
   @media screen and (max-width: 768px) {
     .gs_confirm {
@@ -943,14 +948,18 @@ const STYLES = `
     display: none;
     left: 10px;
     bottom: 10px;
-    z-index: 9999999;
+    z-index: 999999999999;
     width: 300px;
+  }
+  .gs_message_content {
+    display: flex;
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
     min-height: 250px;
     flex-direction: column;
   }
 
-  .gs_message.gs_show { display: flex; }
-  .gs_confirm_container.gs_show {
+  .gs_confirm_container.gs_show, .gs_message.gs_show {
     display: inline-block;
   }
   .gs_ollacart_img img {
@@ -999,8 +1008,8 @@ const STYLES = `
   }
   .gs_message_finish {
     font-size: 30px;
-    top: 35%;
-    padding: 20px 0;
+    top: calc(50% - 100px);
+    padding: 50px 0;
   }
   .gs_addtional_photos {
     margin-top: 5px;
@@ -1094,6 +1103,19 @@ const STYLES = `
   .gs_text_center {
     text-align: center;
   }
+
+  .gs_confirm_content::-webkit-scrollbar, .gs_message_content::-webkit-scrollbar {
+    width: 7px;
+  }
+  .gs_confirm_content::-webkit-scrollbar-track, .gs_message_content::-webkit-scrollbar-track {
+    background: #f1f1f1; 
+  }
+  .gs_confirm_content::-webkit-scrollbar-thumb, .gs_message_content::-webkit-scrollbar-thumb {
+    background: #e19b9b; 
+  }
+  .gs_confirm_content::-webkit-scrollbar-thumb:hover, .gs_message_content::-webkit-scrollbar-thumb:hover {
+    background: #e19b9bd0; 
+  }
 `;
 
 const manualSelect = {
@@ -1106,8 +1128,7 @@ const manualSelect = {
 
 const showMessage = (global) => {
   const info = global.productInfo;
-  console.log(info);
-  let html = '';
+  let html = '<div class="gs_message_content">';
   if (!global.selectMode || global.selectMode === 'img') html += `<div class="gs_ollacart_img"><img src="${info.img}" /></div>`;
   if (!global.selectMode || global.selectMode === 'name' || global.selectMode === 'price') {
     html += `<div class="gs_name_price">`;
@@ -1132,6 +1153,7 @@ const showMessage = (global) => {
         <div class="gs_btn gs_direct" tag="gs__next">></div>
       </div>`;
   }
+  html += `</div>`;
   
   if (global.selectMode) {
     html += `<div class="gs_message_over">Select ${manualSelect[global.selectMode]}</div>`;
@@ -1147,8 +1169,8 @@ const showConfirm = global => {
   hideMessage(global);
 
   const info = global.productInfo;
-  console.log(info);
-  let html = `<div class="gs_ollacart_img"><img src="${info.img}" /></div>`;
+  let html = `<div class="gs_confirm"><div class="gs_confirm_content">`;
+  html += `<div class="gs_ollacart_img"><img src="${info.img}" /></div>`;
   html += `<div class="gs_confirm_right"><div class="gs_name_price"><span>${info.name}</span><span>${info.price || ''}</span></div>`;
   if (info.description) html += `<div class="gs_description">${info.description}</div>`;
   for (let i = 0; info.photos && (i < info.photos.length); i ++ ) {
@@ -1164,12 +1186,13 @@ const showConfirm = global => {
             <div class="gs_btn" tag="gs__manual">Manual Select</div>
           </div>`;
 
-  html += '</div>';
+  html += '</div></div>';
   html += `<div class="gs_message_over">You selected item</div>`;
+  html += `</div>`;
 
-  if (global.finish) html += `<div class="gs_message_mask"><div class="gs_message_finish">Added to OllaCart</div></div>`;
+  if (global.finish) html += `<div class="gs_message_finish">Added to OllaCart</div>`;
 
-  global.confirm.innerHTML = `<div class="gs_confirm">${html}</div>`;
+  global.confirm.innerHTML = html;
   global.confirm.classList.toggle("gs_show", true);
   global.showConfirm = true;
 
@@ -1196,9 +1219,6 @@ const initMessage = global => {
   global.confirm.className = "gs_confirm_container";
   document.body.appendChild(global.confirm);
 };
-
-// const API_URL2 = 'http://localhost:5000/api/'
-const API_URL2 = 'https://ollacart-dev.herokuapp.com/api/';
 
 const clearEl = el => el && el.classList.remove("gs_hover");
 const clearClass = (cl) => {
@@ -1267,9 +1287,9 @@ const init = global => {
   global.sendAPI = () => {
     const productInfo = global.productInfo;
     if (!productInfo.img || !productInfo.name) return;
-
-    const { name, url, price, description, photos } = productInfo;
     const photo = productInfo.img;
+    const url = productInfo.url || findHref(productInfo.elements.e_img) || findHref(productInfo.elements.e_name) || location.href;
+    console.log('url', url);
     
     // fetch(API_URL + 'extension/create', {
     //   method: 'POST',
@@ -1280,14 +1300,14 @@ const init = global => {
     //   body: JSON.stringify({ photo, url, name })
     // });
     
-    fetch(API_URL2 + 'product/create', {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ photo, url, name, price, description, photos, ce_id: localStorage.getItem('ce_id') || '' })
-    });
+    // fetch(API_URL2 + 'product/create', {
+    //   method: 'POST',
+    //   headers: {
+    //     'Accept': 'application/json',
+    //     'Content-Type': 'application/json'
+    //   },
+    //   body: JSON.stringify({ photo, url, name, price, description, photos, ce_id: localStorage.getItem('ce_id') || '' })
+    // });
   };
 
   global.popupBtnClicked = (attr, target) => {
@@ -1300,7 +1320,7 @@ const init = global => {
         global.finish = false;
         toggle(global);
         global.sendClose();
-      }, 5000);
+      }, 6000);
       return;
     }
     if (attr === 'gs__manual') {

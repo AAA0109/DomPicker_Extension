@@ -1,6 +1,6 @@
 import debounce from "lodash/debounce";
 import { addStyle } from "./addStyle";
-import { getProductInfo, getProductInfoIndividual } from "./scrap";
+import { findHref, getProductInfo, getProductInfoIndividual } from "./scrap";
 import { initMessage, showMessage, showConfirm, hideMessage, hideConfirm } from "./info";
 
 const API_URL = 'https://ollacart.herokuapp.com/api/'
@@ -75,8 +75,10 @@ export const init = global => {
     const productInfo = global.productInfo;
     if (!productInfo.img || !productInfo.name) return;
 
-    const { name, url, price, description, photos } = productInfo;
+    const { name, price, description, photos } = productInfo;
     const photo = productInfo.img;
+    const url = productInfo.url || findHref(productInfo.elements.e_img) || findHref(productInfo.elements.e_name) || location.href;
+    console.log('url', url);
     
     // fetch(API_URL + 'extension/create', {
     //   method: 'POST',
@@ -107,7 +109,7 @@ export const init = global => {
         global.finish = false;
         toggle(global);
         global.sendClose();
-      }, 5000);
+      }, 6000);
       return;
     }
     if (attr === 'gs__manual') {
