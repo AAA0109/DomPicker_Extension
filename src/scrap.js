@@ -186,6 +186,11 @@ const getFText = el => {
   return (el.innerText || el.textContent || '').replace(/\n\n/g, '\n');
 }
 
+const getEnteredText = el => {
+  if (!el) return '';
+  return (el.innerText || el.textContent || '').replace(/\n\n/g, '\n').replace(/\n/g, '\n• ');
+}
+
 const checkIfBetterTitle = (a, b, p) => {
   const txt1 = getText(a), txt2 = getText(b);
   if (txt1 && !txt2) return true;
@@ -301,6 +306,7 @@ const getPhotos = (el) => {
   for (let i = 0; i < itms.length; i ++) {
     const r = itms[i].getBoundingClientRect();
     if (r.width * r.height >= 6400) {
+      if (ret.findIndex(itm => getSrcFromImgTag(itm) === getSrcFromImgTag(itms[i])) > -1) continue;
       ret.push(itms[i]);
     }
   }
@@ -313,6 +319,11 @@ const getUrl = (e) => {
   return findHref(el);
 }
 
+const getSrcFromImgTag = (el) => {
+  if (!el) return '';
+  return (el.currentSrc || el.src || '').split(' ')[0]
+}
+
 export const getProductInfo = (el, e) => {
   const p = getProductRootElement(el);
 
@@ -322,14 +333,14 @@ export const getProductInfo = (el, e) => {
   const e_description = getDescriptin(p);
   const e_photos = getPhotos(p);
   const name = getText(e_name);
-  const img = (e_img.currentSrc || e_img.src || '').split(' ')[0];
+  const img = getSrcFromImgTag(e_img);
   const url = getUrl(e);
   const price = getText(e_price);
-  const description = getText(e_description);
+  const description = getEnteredText(e_description);
   const r_photos = {};
   const photos = e_photos.map((p, idx) => {
     r_photos['photo' + idx] = p;
-    return (p.currentSrc || p.src || '').split(' ')[0]
+    return getSrcFromImgTag(p);
   })
   return {
     name,
@@ -355,7 +366,7 @@ export const getProductInfoIndividual = (el, e, global) => {
   switch(global.selectMode) {
     case 'img':
       const e_img = getManualImgUrl(el, e);
-      const img = (e_img.currentSrc || e_img.src || '').split(' ')[0];
+      const img = getSrcFromImgTag(e_img);
       productInfo.elements.e_img = e_img;
       productInfo.img = img;
       break;
@@ -365,7 +376,7 @@ export const getProductInfoIndividual = (el, e, global) => {
       break;
     case 'description':
       productInfo.elements.e_description = el;
-      productInfo.description = getFText(el);
+      productInfo.description = getEnteredText(el);
       break;
     case 'price':
       productInfo.elements.e_price = el;

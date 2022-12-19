@@ -705,6 +705,11 @@ const getFText = el => {
   return (el.innerText || el.textContent || '').replace(/\n\n/g, '\n');
 };
 
+const getEnteredText = el => {
+  if (!el) return '';
+  return (el.innerText || el.textContent || '').replace(/\n\n/g, '\n').replace(/\n/g, '\n• ');
+};
+
 const checkIfBetterTitle = (a, b, p) => {
   const txt1 = getText(a), txt2 = getText(b);
   if (txt1 && !txt2) return true;
@@ -820,6 +825,7 @@ const getPhotos = (el) => {
   for (let i = 0; i < itms.length; i ++) {
     const r = itms[i].getBoundingClientRect();
     if (r.width * r.height >= 6400) {
+      if (ret.findIndex(itm => getSrcFromImgTag(itm) === getSrcFromImgTag(itms[i])) > -1) continue;
       ret.push(itms[i]);
     }
   }
@@ -832,6 +838,11 @@ const getUrl = (e) => {
   return findHref(el);
 };
 
+const getSrcFromImgTag = (el) => {
+  if (!el) return '';
+  return (el.currentSrc || el.src || '').split(' ')[0]
+};
+
 const getProductInfo = (el, e) => {
   const p = getProductRootElement(el);
 
@@ -841,14 +852,14 @@ const getProductInfo = (el, e) => {
   const e_description = getDescriptin(p);
   const e_photos = getPhotos(p);
   const name = getText(e_name);
-  const img = (e_img.currentSrc || e_img.src || '').split(' ')[0];
+  const img = getSrcFromImgTag(e_img);
   const url = getUrl(e);
   const price = getText(e_price);
-  const description = getText(e_description);
+  const description = getEnteredText(e_description);
   const r_photos = {};
   const photos = e_photos.map((p, idx) => {
     r_photos['photo' + idx] = p;
-    return (p.currentSrc || p.src || '').split(' ')[0]
+    return getSrcFromImgTag(p);
   });
   return {
     name,
@@ -874,7 +885,7 @@ const getProductInfoIndividual = (el, e, global) => {
   switch(global.selectMode) {
     case 'img':
       const e_img = getManualImgUrl(el, e);
-      const img = (e_img.currentSrc || e_img.src || '').split(' ')[0];
+      const img = getSrcFromImgTag(e_img);
       productInfo.elements.e_img = e_img;
       productInfo.img = img;
       break;
@@ -884,7 +895,7 @@ const getProductInfoIndividual = (el, e, global) => {
       break;
     case 'description':
       productInfo.elements.e_description = el;
-      productInfo.description = getFText(el);
+      productInfo.description = getEnteredText(el);
       break;
     case 'price':
       productInfo.elements.e_price = el;
@@ -901,6 +912,9 @@ const getProductInfoIndividual = (el, e, global) => {
 };
 
 const STYLES = `
+  .gs_confirm_container *, .gs_message * {
+    color: black;
+  }
   .gs_confirm_container {
     position: fixed;
     left: 0;
@@ -984,6 +998,7 @@ const STYLES = `
   .gs_description {
     font-size: 14px;
     margin-top: 10px;
+    white-space: break-spaces;
   }
   .gs_message_over, .gs_message_finish {
     position: absolute;
@@ -1103,6 +1118,17 @@ const STYLES = `
   .gs_text_center {
     text-align: center;
   }
+  .gs_go_ollacart {
+    margin-top: 25px;
+    font-size: 20px;
+    line-height: 25px;
+  }
+  .gs_textarea {
+    width: 100%;
+    height: 300px;
+    min-height: 300px;
+    max-height: 300px;
+  }
 
   .gs_confirm_content::-webkit-scrollbar, .gs_message_content::-webkit-scrollbar {
     width: 7px;
@@ -1130,13 +1156,13 @@ const showMessage = (global) => {
   const info = global.productInfo;
   let html = '<div class="gs_message_content">';
   if (!global.selectMode || global.selectMode === 'img') html += `<div class="gs_ollacart_img"><img src="${info.img}" /></div>`;
-  if (!global.selectMode || global.selectMode === 'name' || global.selectMode === 'price') {
-    html += `<div class="gs_name_price">`;
-    if (!global.selectMode || global.selectMode === 'name') html += `<span>${info.name}</span>`;
-    if (!global.selectMode || global.selectMode === 'price') html += `<span>${info.price || ''}</span>`;
-    html += `</div>`;
+  if (!global.selectMode) {
+    html += `<div class="gs_name_price"><span>${info.name}</span><span>${info.price || ''}</span></div>`;
   }
-  if (!global.selectMode || global.selectMode === 'description') html += `<div class="gs_description">${info.description}</div>`;
+  if (!global.selectMode) html += `<div class="gs_description">${info.description}</div>`;
+  if (global.selectMode === 'name' || global.selectMode === 'price' || global.selectMode === 'description') {
+    html += `<textarea class="gs_textarea" tag="gs__text" target="${global.selectMode}">${info[global.selectMode]}</textarea>`;
+  }
   if (!global.selectMode || global.selectMode === 'photos') {
     for (let i = 0; info.photos && (i < info.photos.length); i ++ ) {
       if (i === 0) html += `<div class="gs_addtional_photos">`;
@@ -1170,7 +1196,7 @@ const showConfirm = global => {
 
   const info = global.productInfo;
   let html = `<div class="gs_confirm"><div class="gs_confirm_content">`;
-  html += `<div class="gs_ollacart_img"><img src="${info.img}" /></div>`;
+  html += `<div class="gs_ollacart_img"><img src="${info.img}" /><p class="gs_text_center gs_go_ollacart">Go to <a href="https://www.ollacart.com" target="_blank">OllaCart</a></p></div>`;
   html += `<div class="gs_confirm_right"><div class="gs_name_price"><span>${info.name}</span><span>${info.price || ''}</span></div>`;
   if (info.description) html += `<div class="gs_description">${info.description}</div>`;
   for (let i = 0; info.photos && (i < info.photos.length); i ++ ) {
@@ -1180,14 +1206,13 @@ const showConfirm = global => {
     if (i === info.photos.length - 1) html += `</div>`;
   }
   
-  html += `<p class="gs_text_center">Go to <a href="https://www.ollacart.com" target="_blank">OllaCart</a></p>`;
   html += `<div class="gs_confirm_tools">
             <div class="gs_btn" tag="gs__confirm">Looks Correct</div>
             <div class="gs_btn" tag="gs__manual">Manual Select</div>
           </div>`;
 
   html += '</div></div>';
-  html += `<div class="gs_message_over">You selected item</div>`;
+  // html += `<div class="gs_message_over">You selected item</div>`;
   html += `</div>`;
 
   if (global.finish) html += `<div class="gs_message_finish">Added to OllaCart</div>`;
@@ -1219,6 +1244,9 @@ const initMessage = global => {
   global.confirm.className = "gs_confirm_container";
   document.body.appendChild(global.confirm);
 };
+
+// const API_URL2 = 'http://localhost:5000/api/'
+const API_URL2 = 'https://ollacart-dev.herokuapp.com/api/';
 
 const clearEl = el => el && el.classList.remove("gs_hover");
 const clearClass = (cl) => {
@@ -1263,6 +1291,7 @@ const toggle = global => {
   document[action]("mouseover", global.selectElement);
   document[action]("mouseout", global.clearElDebounce);
   document[action]("mousedown", global.domPick);
+  document[action]("input", global.inputValueChanged);
   if (state) global.disableLinks();
 
   if (!state) {
@@ -1287,6 +1316,8 @@ const init = global => {
   global.sendAPI = () => {
     const productInfo = global.productInfo;
     if (!productInfo.img || !productInfo.name) return;
+
+    const { name, price, description, photos } = productInfo;
     const photo = productInfo.img;
     const url = productInfo.url || findHref(productInfo.elements.e_img) || findHref(productInfo.elements.e_name) || location.href;
     console.log('url', url);
@@ -1300,14 +1331,14 @@ const init = global => {
     //   body: JSON.stringify({ photo, url, name })
     // });
     
-    // fetch(API_URL2 + 'product/create', {
-    //   method: 'POST',
-    //   headers: {
-    //     'Accept': 'application/json',
-    //     'Content-Type': 'application/json'
-    //   },
-    //   body: JSON.stringify({ photo, url, name, price, description, photos, ce_id: localStorage.getItem('ce_id') || '' })
-    // });
+    fetch(API_URL2 + 'product/create', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ photo, url, name, price, description, photos, ce_id: localStorage.getItem('ce_id') || '' })
+    });
   };
 
   global.popupBtnClicked = (attr, target) => {
@@ -1386,7 +1417,7 @@ const init = global => {
     if (global.popup.contains(e.target) || global.confirm.contains(e.target)) {
       const attr = e.target.getAttribute('tag');
       const target = e.target.getAttribute('target') || '';
-      if (attr)
+      if (attr && attr !== 'gs__text')
         global.popupBtnClicked(attr, target);
       return ;
     }
@@ -1413,6 +1444,16 @@ const init = global => {
       return ;
     }
     showConfirm(global);
+  };
+
+  global.inputValueChanged = (e) => {
+    console.log(e.target.value);
+    const tag = e.target.getAttribute("tag");
+    const target = e.target.getAttribute("target");
+    if (tag === 'gs__text' || !target) {
+      global.productInfo[target] = e.target.value;
+      global.tempInfo[target] = e.target.value;
+    }
   };
 
   global.disableClick = (e) => {

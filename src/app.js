@@ -50,6 +50,7 @@ export const toggle = global => {
   document[action]("mouseover", global.selectElement);
   document[action]("mouseout", global.clearElDebounce);
   document[action]("mousedown", global.domPick);
+  document[action]("input", global.inputValueChanged);
   if (state) global.disableLinks()
 
   if (!state) {
@@ -175,7 +176,7 @@ export const init = global => {
     if (global.popup.contains(e.target) || global.confirm.contains(e.target)) {
       const attr = e.target.getAttribute('tag')
       const target = e.target.getAttribute('target') || ''
-      if (attr)
+      if (attr && attr !== 'gs__text')
         global.popupBtnClicked(attr, target);
       return ;
     }
@@ -203,6 +204,16 @@ export const init = global => {
     }
     showConfirm(global);
   };
+
+  global.inputValueChanged = (e) => {
+    console.log(e.target.value);
+    const tag = e.target.getAttribute("tag");
+    const target = e.target.getAttribute("target");
+    if (tag === 'gs__text' || !target) {
+      global.productInfo[target] = e.target.value;
+      global.tempInfo[target] = e.target.value;
+    }
+  }
 
   global.disableClick = (e) => {
     if(global.state) {

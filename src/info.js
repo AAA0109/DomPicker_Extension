@@ -1,6 +1,9 @@
 import { addStyle } from "./addStyle";
 
 const STYLES = `
+  .gs_confirm_container *, .gs_message * {
+    color: black;
+  }
   .gs_confirm_container {
     position: fixed;
     left: 0;
@@ -84,6 +87,7 @@ const STYLES = `
   .gs_description {
     font-size: 14px;
     margin-top: 10px;
+    white-space: break-spaces;
   }
   .gs_message_over, .gs_message_finish {
     position: absolute;
@@ -203,6 +207,17 @@ const STYLES = `
   .gs_text_center {
     text-align: center;
   }
+  .gs_go_ollacart {
+    margin-top: 25px;
+    font-size: 20px;
+    line-height: 25px;
+  }
+  .gs_textarea {
+    width: 100%;
+    height: 300px;
+    min-height: 300px;
+    max-height: 300px;
+  }
 
   .gs_confirm_content::-webkit-scrollbar, .gs_message_content::-webkit-scrollbar {
     width: 7px;
@@ -230,13 +245,13 @@ export const showMessage = (global) => {
   const info = global.productInfo;
   let html = '<div class="gs_message_content">';
   if (!global.selectMode || global.selectMode === 'img') html += `<div class="gs_ollacart_img"><img src="${info.img}" /></div>`;
-  if (!global.selectMode || global.selectMode === 'name' || global.selectMode === 'price') {
-    html += `<div class="gs_name_price">`;
-    if (!global.selectMode || global.selectMode === 'name') html += `<span>${info.name}</span>`;
-    if (!global.selectMode || global.selectMode === 'price') html += `<span>${info.price || ''}</span>`
-    html += `</div>`;
+  if (!global.selectMode) {
+    html += `<div class="gs_name_price"><span>${info.name}</span><span>${info.price || ''}</span></div>`;
   }
-  if (!global.selectMode || global.selectMode === 'description') html += `<div class="gs_description">${info.description}</div>`
+  if (!global.selectMode) html += `<div class="gs_description">${info.description}</div>`
+  if (global.selectMode === 'name' || global.selectMode === 'price' || global.selectMode === 'description') {
+    html += `<textarea class="gs_textarea" tag="gs__text" target="${global.selectMode}">${info[global.selectMode]}</textarea>`
+  }
   if (!global.selectMode || global.selectMode === 'photos') {
     for (let i = 0; info.photos && (i < info.photos.length); i ++ ) {
       if (i === 0) html += `<div class="gs_addtional_photos">`
@@ -270,7 +285,7 @@ export const showConfirm = global => {
 
   const info = global.productInfo;
   let html = `<div class="gs_confirm"><div class="gs_confirm_content">`
-  html += `<div class="gs_ollacart_img"><img src="${info.img}" /></div>`;
+  html += `<div class="gs_ollacart_img"><img src="${info.img}" /><p class="gs_text_center gs_go_ollacart">Go to <a href="https://www.ollacart.com" target="_blank">OllaCart</a></p></div>`;
   html += `<div class="gs_confirm_right"><div class="gs_name_price"><span>${info.name}</span><span>${info.price || ''}</span></div>`;
   if (info.description) html += `<div class="gs_description">${info.description}</div>`
   for (let i = 0; info.photos && (i < info.photos.length); i ++ ) {
@@ -280,14 +295,13 @@ export const showConfirm = global => {
     if (i === info.photos.length - 1) html += `</div>`
   }
   
-  html += `<p class="gs_text_center">Go to <a href="https://www.ollacart.com" target="_blank">OllaCart</a></p>`;
   html += `<div class="gs_confirm_tools">
             <div class="gs_btn" tag="gs__confirm">Looks Correct</div>
             <div class="gs_btn" tag="gs__manual">Manual Select</div>
           </div>`
 
   html += '</div></div>';
-  html += `<div class="gs_message_over">You selected item</div>`;
+  // html += `<div class="gs_message_over">You selected item</div>`;
   html += `</div>`
 
   if (global.finish) html += `<div class="gs_message_finish">Added to OllaCart</div>`;
