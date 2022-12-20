@@ -34,7 +34,7 @@ const STYLES = `
     display: none;
   }
   .gs_confirm_content {
-    width: 700px;
+    width: 730px;
     max-height: calc(100vh - 150px);
     overflow-y: auto;
     display: flex;
@@ -67,10 +67,9 @@ const STYLES = `
   }
   .gs_ollacart_img img {
     width: 100%;
-    max-height: 300px;
   }
   .gs_confirm .gs_ollacart_img {
-    width: 300px;
+    width: 350px;
   }
   .gs_name_price {
     display: flex;
