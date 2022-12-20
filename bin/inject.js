@@ -26,12 +26,6 @@
  * _.isObject(null);
  * // => false
  */
-function isObject(value) {
-  var type = typeof value;
-  return value != null && (type == 'object' || type == 'function');
-}
-
-var isObject_1 = isObject;
 
 var commonjsGlobal = typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
 
@@ -48,163 +42,20 @@ var root = _freeGlobal || freeSelf || Function('return this')();
 
 var _root = root;
 
-/**
- * Gets the timestamp of the number of milliseconds that have elapsed since
- * the Unix epoch (1 January 1970 00:00:00 UTC).
- *
- * @static
- * @memberOf _
- * @since 2.4.0
- * @category Date
- * @returns {number} Returns the timestamp.
- * @example
- *
- * _.defer(function(stamp) {
- *   console.log(_.now() - stamp);
- * }, _.now());
- * // => Logs the number of milliseconds it took for the deferred invocation.
- */
-var now = function() {
-  return _root.Date.now();
-};
-
-var now_1 = now;
-
 /** Used to match a single whitespace character. */
-var reWhitespace = /\s/;
-
-/**
- * Used by `_.trim` and `_.trimEnd` to get the index of the last non-whitespace
- * character of `string`.
- *
- * @private
- * @param {string} string The string to inspect.
- * @returns {number} Returns the index of the last non-whitespace character.
- */
-function trimmedEndIndex(string) {
-  var index = string.length;
-
-  while (index-- && reWhitespace.test(string.charAt(index))) {}
-  return index;
-}
-
-var _trimmedEndIndex = trimmedEndIndex;
-
-/** Used to match leading whitespace. */
-var reTrimStart = /^\s+/;
-
-/**
- * The base implementation of `_.trim`.
- *
- * @private
- * @param {string} string The string to trim.
- * @returns {string} Returns the trimmed string.
- */
-function baseTrim(string) {
-  return string
-    ? string.slice(0, _trimmedEndIndex(string) + 1).replace(reTrimStart, '')
-    : string;
-}
-
-var _baseTrim = baseTrim;
 
 /** Built-in value references. */
 var Symbol = _root.Symbol;
 
 var _Symbol = Symbol;
 
-/** Used for built-in method references. */
-var objectProto = Object.prototype;
-
-/** Used to check objects for own properties. */
-var hasOwnProperty = objectProto.hasOwnProperty;
-
-/**
- * Used to resolve the
- * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
- * of values.
- */
-var nativeObjectToString = objectProto.toString;
-
 /** Built-in value references. */
 var symToStringTag = _Symbol ? _Symbol.toStringTag : undefined;
 
-/**
- * A specialized version of `baseGetTag` which ignores `Symbol.toStringTag` values.
- *
- * @private
- * @param {*} value The value to query.
- * @returns {string} Returns the raw `toStringTag`.
- */
-function getRawTag(value) {
-  var isOwn = hasOwnProperty.call(value, symToStringTag),
-      tag = value[symToStringTag];
-
-  try {
-    value[symToStringTag] = undefined;
-    var unmasked = true;
-  } catch (e) {}
-
-  var result = nativeObjectToString.call(value);
-  if (unmasked) {
-    if (isOwn) {
-      value[symToStringTag] = tag;
-    } else {
-      delete value[symToStringTag];
-    }
-  }
-  return result;
-}
-
-var _getRawTag = getRawTag;
-
 /** Used for built-in method references. */
-var objectProto$1 = Object.prototype;
-
-/**
- * Used to resolve the
- * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
- * of values.
- */
-var nativeObjectToString$1 = objectProto$1.toString;
-
-/**
- * Converts `value` to a string using `Object.prototype.toString`.
- *
- * @private
- * @param {*} value The value to convert.
- * @returns {string} Returns the converted string.
- */
-function objectToString(value) {
-  return nativeObjectToString$1.call(value);
-}
-
-var _objectToString = objectToString;
-
-/** `Object#toString` result references. */
-var nullTag = '[object Null]',
-    undefinedTag = '[object Undefined]';
 
 /** Built-in value references. */
 var symToStringTag$1 = _Symbol ? _Symbol.toStringTag : undefined;
-
-/**
- * The base implementation of `getTag` without fallbacks for buggy environments.
- *
- * @private
- * @param {*} value The value to query.
- * @returns {string} Returns the `toStringTag`.
- */
-function baseGetTag(value) {
-  if (value == null) {
-    return value === undefined ? undefinedTag : nullTag;
-  }
-  return (symToStringTag$1 && symToStringTag$1 in Object(value))
-    ? _getRawTag(value)
-    : _objectToString(value);
-}
-
-var _baseGetTag = baseGetTag;
 
 /**
  * Checks if `value` is object-like. A value is object-like if it's not `null`
@@ -230,287 +81,6 @@ var _baseGetTag = baseGetTag;
  * _.isObjectLike(null);
  * // => false
  */
-function isObjectLike(value) {
-  return value != null && typeof value == 'object';
-}
-
-var isObjectLike_1 = isObjectLike;
-
-/** `Object#toString` result references. */
-var symbolTag = '[object Symbol]';
-
-/**
- * Checks if `value` is classified as a `Symbol` primitive or object.
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to check.
- * @returns {boolean} Returns `true` if `value` is a symbol, else `false`.
- * @example
- *
- * _.isSymbol(Symbol.iterator);
- * // => true
- *
- * _.isSymbol('abc');
- * // => false
- */
-function isSymbol(value) {
-  return typeof value == 'symbol' ||
-    (isObjectLike_1(value) && _baseGetTag(value) == symbolTag);
-}
-
-var isSymbol_1 = isSymbol;
-
-/** Used as references for various `Number` constants. */
-var NAN = 0 / 0;
-
-/** Used to detect bad signed hexadecimal string values. */
-var reIsBadHex = /^[-+]0x[0-9a-f]+$/i;
-
-/** Used to detect binary string values. */
-var reIsBinary = /^0b[01]+$/i;
-
-/** Used to detect octal string values. */
-var reIsOctal = /^0o[0-7]+$/i;
-
-/** Built-in method references without a dependency on `root`. */
-var freeParseInt = parseInt;
-
-/**
- * Converts `value` to a number.
- *
- * @static
- * @memberOf _
- * @since 4.0.0
- * @category Lang
- * @param {*} value The value to process.
- * @returns {number} Returns the number.
- * @example
- *
- * _.toNumber(3.2);
- * // => 3.2
- *
- * _.toNumber(Number.MIN_VALUE);
- * // => 5e-324
- *
- * _.toNumber(Infinity);
- * // => Infinity
- *
- * _.toNumber('3.2');
- * // => 3.2
- */
-function toNumber(value) {
-  if (typeof value == 'number') {
-    return value;
-  }
-  if (isSymbol_1(value)) {
-    return NAN;
-  }
-  if (isObject_1(value)) {
-    var other = typeof value.valueOf == 'function' ? value.valueOf() : value;
-    value = isObject_1(other) ? (other + '') : other;
-  }
-  if (typeof value != 'string') {
-    return value === 0 ? value : +value;
-  }
-  value = _baseTrim(value);
-  var isBinary = reIsBinary.test(value);
-  return (isBinary || reIsOctal.test(value))
-    ? freeParseInt(value.slice(2), isBinary ? 2 : 8)
-    : (reIsBadHex.test(value) ? NAN : +value);
-}
-
-var toNumber_1 = toNumber;
-
-/** Error message constants. */
-var FUNC_ERROR_TEXT = 'Expected a function';
-
-/* Built-in method references for those with the same name as other `lodash` methods. */
-var nativeMax = Math.max,
-    nativeMin = Math.min;
-
-/**
- * Creates a debounced function that delays invoking `func` until after `wait`
- * milliseconds have elapsed since the last time the debounced function was
- * invoked. The debounced function comes with a `cancel` method to cancel
- * delayed `func` invocations and a `flush` method to immediately invoke them.
- * Provide `options` to indicate whether `func` should be invoked on the
- * leading and/or trailing edge of the `wait` timeout. The `func` is invoked
- * with the last arguments provided to the debounced function. Subsequent
- * calls to the debounced function return the result of the last `func`
- * invocation.
- *
- * **Note:** If `leading` and `trailing` options are `true`, `func` is
- * invoked on the trailing edge of the timeout only if the debounced function
- * is invoked more than once during the `wait` timeout.
- *
- * If `wait` is `0` and `leading` is `false`, `func` invocation is deferred
- * until to the next tick, similar to `setTimeout` with a timeout of `0`.
- *
- * See [David Corbacho's article](https://css-tricks.com/debouncing-throttling-explained-examples/)
- * for details over the differences between `_.debounce` and `_.throttle`.
- *
- * @static
- * @memberOf _
- * @since 0.1.0
- * @category Function
- * @param {Function} func The function to debounce.
- * @param {number} [wait=0] The number of milliseconds to delay.
- * @param {Object} [options={}] The options object.
- * @param {boolean} [options.leading=false]
- *  Specify invoking on the leading edge of the timeout.
- * @param {number} [options.maxWait]
- *  The maximum time `func` is allowed to be delayed before it's invoked.
- * @param {boolean} [options.trailing=true]
- *  Specify invoking on the trailing edge of the timeout.
- * @returns {Function} Returns the new debounced function.
- * @example
- *
- * // Avoid costly calculations while the window size is in flux.
- * jQuery(window).on('resize', _.debounce(calculateLayout, 150));
- *
- * // Invoke `sendMail` when clicked, debouncing subsequent calls.
- * jQuery(element).on('click', _.debounce(sendMail, 300, {
- *   'leading': true,
- *   'trailing': false
- * }));
- *
- * // Ensure `batchLog` is invoked once after 1 second of debounced calls.
- * var debounced = _.debounce(batchLog, 250, { 'maxWait': 1000 });
- * var source = new EventSource('/stream');
- * jQuery(source).on('message', debounced);
- *
- * // Cancel the trailing debounced invocation.
- * jQuery(window).on('popstate', debounced.cancel);
- */
-function debounce(func, wait, options) {
-  var lastArgs,
-      lastThis,
-      maxWait,
-      result,
-      timerId,
-      lastCallTime,
-      lastInvokeTime = 0,
-      leading = false,
-      maxing = false,
-      trailing = true;
-
-  if (typeof func != 'function') {
-    throw new TypeError(FUNC_ERROR_TEXT);
-  }
-  wait = toNumber_1(wait) || 0;
-  if (isObject_1(options)) {
-    leading = !!options.leading;
-    maxing = 'maxWait' in options;
-    maxWait = maxing ? nativeMax(toNumber_1(options.maxWait) || 0, wait) : maxWait;
-    trailing = 'trailing' in options ? !!options.trailing : trailing;
-  }
-
-  function invokeFunc(time) {
-    var args = lastArgs,
-        thisArg = lastThis;
-
-    lastArgs = lastThis = undefined;
-    lastInvokeTime = time;
-    result = func.apply(thisArg, args);
-    return result;
-  }
-
-  function leadingEdge(time) {
-    // Reset any `maxWait` timer.
-    lastInvokeTime = time;
-    // Start the timer for the trailing edge.
-    timerId = setTimeout(timerExpired, wait);
-    // Invoke the leading edge.
-    return leading ? invokeFunc(time) : result;
-  }
-
-  function remainingWait(time) {
-    var timeSinceLastCall = time - lastCallTime,
-        timeSinceLastInvoke = time - lastInvokeTime,
-        timeWaiting = wait - timeSinceLastCall;
-
-    return maxing
-      ? nativeMin(timeWaiting, maxWait - timeSinceLastInvoke)
-      : timeWaiting;
-  }
-
-  function shouldInvoke(time) {
-    var timeSinceLastCall = time - lastCallTime,
-        timeSinceLastInvoke = time - lastInvokeTime;
-
-    // Either this is the first call, activity has stopped and we're at the
-    // trailing edge, the system time has gone backwards and we're treating
-    // it as the trailing edge, or we've hit the `maxWait` limit.
-    return (lastCallTime === undefined || (timeSinceLastCall >= wait) ||
-      (timeSinceLastCall < 0) || (maxing && timeSinceLastInvoke >= maxWait));
-  }
-
-  function timerExpired() {
-    var time = now_1();
-    if (shouldInvoke(time)) {
-      return trailingEdge(time);
-    }
-    // Restart the timer.
-    timerId = setTimeout(timerExpired, remainingWait(time));
-  }
-
-  function trailingEdge(time) {
-    timerId = undefined;
-
-    // Only invoke if we have `lastArgs` which means `func` has been
-    // debounced at least once.
-    if (trailing && lastArgs) {
-      return invokeFunc(time);
-    }
-    lastArgs = lastThis = undefined;
-    return result;
-  }
-
-  function cancel() {
-    if (timerId !== undefined) {
-      clearTimeout(timerId);
-    }
-    lastInvokeTime = 0;
-    lastArgs = lastCallTime = lastThis = timerId = undefined;
-  }
-
-  function flush() {
-    return timerId === undefined ? result : trailingEdge(now_1());
-  }
-
-  function debounced() {
-    var time = now_1(),
-        isInvoking = shouldInvoke(time);
-
-    lastArgs = arguments;
-    lastThis = this;
-    lastCallTime = time;
-
-    if (isInvoking) {
-      if (timerId === undefined) {
-        return leadingEdge(lastCallTime);
-      }
-      if (maxing) {
-        // Handle invocations in a tight loop.
-        clearTimeout(timerId);
-        timerId = setTimeout(timerExpired, wait);
-        return invokeFunc(lastCallTime);
-      }
-    }
-    if (timerId === undefined) {
-      timerId = setTimeout(timerExpired, wait);
-    }
-    return result;
-  }
-  debounced.cancel = cancel;
-  debounced.flush = flush;
-  return debounced;
-}
-
-var debounce_1 = debounce;
 
 class ElementOverlay {
     constructor(options) {
@@ -526,6 +96,7 @@ class ElementOverlay {
         this.overlay.style.cursor = ((_g = options.style) === null || _g === void 0 ? void 0 : _g.cursor) || "crosshair";
         this.overlay.style.position = ((_h = options.style) === null || _h === void 0 ? void 0 : _h.position) || "absolute";
         this.overlay.style.zIndex = ((_j = options.style) === null || _j === void 0 ? void 0 : _j.zIndex) || "2147483647";
+        // this.overlay.style.transition = "all .2s linear";
         this.shadowContainer = document.createElement("div");
         this.shadowContainer.className = "_ext-element-overlay-container";
         this.shadowContainer.style.position = "absolute";
@@ -562,6 +133,14 @@ class ElementOverlay {
         this.overlay.style.width = width + "px";
         this.overlay.style.height = height + "px";
     }
+    getBounds() {
+        return {
+            x: parseFloat(this.overlay.style.left),
+            y: parseFloat(this.overlay.style.top),
+            width: parseFloat(this.overlay.style.width),
+            height: parseFloat(this.overlay.style.height),
+        }
+    }
 }
 
 const getElementBounds = (el) => {
@@ -572,6 +151,15 @@ const getElementBounds = (el) => {
         width: el.offsetWidth,
         height: el.offsetHeight,
     };
+};
+
+const checkSimilarBounds = (b1, b2) => {
+    const keys = ['x', 'y', 'width', 'height'];
+    for (let i = 0 ; i < keys.length; i ++) {
+        if (Math.abs(b1[keys[i]] - b2[keys[i]]) > 0.1 )
+            return false;
+    }
+    return true;
 };
 
 class ElementPicker {
@@ -631,9 +219,7 @@ class ElementPicker {
         const newTarget = elAtCursor;
         this.overlay.captureCursor();
         // If the target hasn't changed, there's nothing to do
-        if (!newTarget || newTarget === this.target) {
-            return;
-        }
+        if (!newTarget) return;
         // If we have an element filter and the new target doesn't match,
         // clear out the target
         if ((_a = this.options) === null || _a === void 0 ? void 0 : _a.elementFilter) {
@@ -643,8 +229,15 @@ class ElementPicker {
                 return;
             }
         }
-        this.target = newTarget;
+
         const bounds = getElementBounds(newTarget);
+        if (newTarget === this.target) {
+            const ori_bounds = this.overlay.getBounds();
+            if (checkSimilarBounds(bounds, ori_bounds))
+                return ;
+        }
+
+        this.target = newTarget;
         this.overlay.setBounds(bounds);
         if ((_b = this.options) === null || _b === void 0 ? void 0 : _b.onHover) {
             this.options.onHover(newTarget);
@@ -789,12 +382,12 @@ const checkIfDescendOf = (ch, p, signs) => {
 };
 
 const isHovered = (r, e) => {
-  const x = e.clientX, y = e.clientY;
+  const x = e.x, y = e.y;
   if (r.left <= x && r.right >= x && r.top <= y && r.bottom >= y) return true;
   return false;
 };
 
-const checkIfBetterImg = (a, b, e) => {
+const checkIfBetterImg = (a, b, mouse) => {
   if (!isVisible(a)) return false;
   if (!isVisible(b)) return true;
   if (!a.currentSrc && !a.src) return false;
@@ -802,7 +395,7 @@ const checkIfBetterImg = (a, b, e) => {
 
   const offset = 2;
   const r1 = a.getBoundingClientRect(), r2 = b.getBoundingClientRect();
-  const h1 = isHovered(r1, e), h2 = isHovered(r2, e);
+  const h1 = isHovered(r1, mouse), h2 = isHovered(r2, mouse);
   if (h1 && !h2) return true;
   if (!h1 && h2) return false;
 
@@ -901,7 +494,7 @@ const findHref = el => {
   return '';
 };
 
-const getImgUrl = (el, e) => {
+const getImgUrl = (el, mouse) => {
   if (!el) return '';
   if (el.tagName.toLocaleLowerCase() === 'img') return el;
   const imgs = el.getElementsByTagName('img');
@@ -909,14 +502,14 @@ const getImgUrl = (el, e) => {
 
   var ret = imgs[0];
   for (let i = 1; i < imgs.length; i ++) {
-    if (checkIfBetterImg(imgs[i], ret, e)) ret = imgs[i];
+    if (checkIfBetterImg(imgs[i], ret, mouse)) ret = imgs[i];
   }
   return ret;
 };
 
-const getManualImgUrl = (el, e) => {
+const getManualImgUrl = (el, mouse) => {
   while(el.tagName !== 'body') {
-    const img = getImgUrl(el, e);
+    const img = getImgUrl(el, mouse);
     if (img) return img;
     el = el.parentNode;
   }
@@ -972,8 +565,7 @@ const getPhotos = (el) => {
   return ret;
 };
 
-const getUrl = (e) => {
-  const el = document.elementFromPoint(e.clientX, e.clientY);
+const getUrl = (el) => {
   if (!el) return '';
   return findHref(el);
 };
@@ -983,17 +575,17 @@ const getSrcFromImgTag = (el) => {
   return (el.currentSrc || el.src || '').split(' ')[0]
 };
 
-const getProductInfo = (el, e) => {
+const getProductInfo = (el, picker) => {
   const p = getProductRootElement(el);
 
-  const e_img = getImgUrl(p, e);
+  const e_img = getImgUrl(p, { x: picker.mouseX, y: picker.mouseY });
   const e_name = getName(p);
   const e_price = getPrice(p);
   const e_description = getDescriptin(p);
   const e_photos = getPhotos(p);
   const name = getText(e_name);
   const img = getSrcFromImgTag(e_img);
-  const url = getUrl(e);
+  const url = getUrl(el);
   const price = getText(e_price);
   const description = getEnteredText(e_description);
   const r_photos = {};
@@ -1012,7 +604,7 @@ const getProductInfo = (el, e) => {
   }
 };
 
-const getProductInfoIndividual = (el, e, global) => {
+const getProductInfoIndividual = (el, picker, global) => {
   if (!global.productInfo) global.productInfo = {};
   const productInfo = global.productInfo;
   if (!productInfo.elements) productInfo.elements = {};
@@ -1024,7 +616,7 @@ const getProductInfoIndividual = (el, e, global) => {
 
   switch(global.selectMode) {
     case 'img':
-      const e_img = getManualImgUrl(el, e);
+      const e_img = getManualImgUrl(el, { x: picker.mouseX, y: picker.mouseY });
       const img = getSrcFromImgTag(e_img);
       productInfo.elements.e_img = e_img;
       productInfo.img = img;
@@ -1043,7 +635,7 @@ const getProductInfoIndividual = (el, e, global) => {
       break;
     case 'photos':
       const idx = productInfo.photos.length - 1;
-      const e_photo = getManualImgUrl(el, e);
+      const e_photo = getManualImgUrl(el, { x: picker.mouseX, y: picker.mouseY });
       const photo = (e_photo.currentSrc || e_photo.src || '').split(' ')[0];
       productInfo.elements['photo' + idx] = e_photo;
       productInfo.photos[idx] = photo;
@@ -1387,7 +979,6 @@ const initMessage = global => {
 // const API_URL2 = 'http://localhost:5000/api/'
 const API_URL2 = 'https://ollacart-dev.herokuapp.com/api/';
 
-const clearEl = el => el && el.classList.remove("gs_hover");
 const clearClass = (cl) => {
   const itms = document.getElementsByClassName(cl);
   for (let i = itms.length - 1 ; i >= 0; i --) itms[i].classList.remove(cl);
@@ -1416,8 +1007,6 @@ const copyFromTemp = (global) => {
   if (i === keys.length) return;
   global.productInfo = {
     ...global.tempInfo,
-    // elements: {...(global.tempInfo.elements || {})},
-    // photos: [...(global.tempInfo.photos || [])]
   };
   showMessage(global);
 };
@@ -1426,28 +1015,17 @@ const toggle = global => {
   const state = !global.state;
   global.state = state;
   global.selectMode = null;
-  // const action = state ? "addEventListener" : "removeEventListener";
-  // document[action]("mouseover", global.selectElement);
-  // document[action]("mouseout", global.clearElDebounce);
-  // document[action]("mousedown", global.domPick);
-  // document[action]("input", global.inputValueChanged);
-  // if (state) global.disableLinks()
 
-  const picker = new ElementPicker({
-    style: {
-      background: "rgba(153, 235, 255, 0.5)",
-      borderColor: "yellow"
-    },
-  });
   if (state) {
-    picker.start({
-      onHover: (a, b) => console.log(a, b, picker.mouseX),
-      onClick: (a, b) => console.log(a, b, picker)
+    global.picker.start({
+      onHover: global.selectElement,
+      onClick: global.domPick
     });
+  } else {
+    global.picker.stop();
   }
 
   if (!state) {
-    clearEl(global.selectedEl);
     clearClass('gs_copied');
     hideMessage(global);
     hideConfirm(global);
@@ -1457,13 +1035,16 @@ const toggle = global => {
 const init = global => {
   global.init = true;
   global.state = false;
-  global.selectedEl = null;
   global.selectMode = null;
   global.productInfo = {};
   global.tempInfo = {};
+  global.picker = new ElementPicker({
+    style: {
+      background: "rgba(153, 235, 255, 0.5)",
+      borderColor: "yellow"
+    },
+  });
   global.items = ['img', 'name', 'price', 'description', 'photos'];
-  
-  global.clearElDebounce = debounce_1(() => clearEl(global.selectedEl) && hideMessage(global), 200);
 
   global.sendAPI = () => {
     const productInfo = global.productInfo;
@@ -1541,46 +1122,39 @@ const init = global => {
     showMessage(global);
   };
   
-  global.selectElement = debounce_1(e => {
-    if (e.target.tagName.toLocaleLowerCase() === 'html') return;
-    if (global.finish || !global.popup || global.confirm.contains(e.target)) return;
-    if (global.popup.contains(e.target)) {
+  global.selectElement = el => {
+    console.log(global.picker);
+    if (!el) return;
+    if (el.tagName.toLocaleLowerCase() === 'html') return;
+    if (global.finish || !global.popup || global.confirm.contains(el)) return;
+    if (global.popup.contains(el)) {
       copyFromTemp(global);
       return;
     }
-    if (global.selectedEl !== e.target) {
-      clearEl(global.selectedEl);
-    }
-    global.selectedEl = e.target;
-    const selectedEl = global.selectedEl;
-    selectedEl.classList.add("gs_hover");
     
     if (!global.selectMode) {
-      global.productInfo = getProductInfo(selectedEl, e);
+      global.productInfo = getProductInfo(el, global.picker);
     } else {
-      getProductInfoIndividual(selectedEl, e, global);
+      getProductInfoIndividual(el, global.picker, global);
     }
     showMessage(global);
-  }, 200);
+  };
   
-  global.domPick = (e) => {
-    if (e.target.tagName.toLocaleLowerCase() === 'html') return;
+  global.domPick = (el) => {
+    if (!el) return ;
+    if (el.tagName.toLocaleLowerCase() === 'html') return;
     if (global.finish || !global.popup) return;
-    if (global.popup.contains(e.target) || global.confirm.contains(e.target)) {
-      const attr = e.target.getAttribute('tag');
-      const target = e.target.getAttribute('target') || '';
+    if (global.popup.contains(el) || global.confirm.contains(el)) {
+      const attr = el.getAttribute('tag');
+      const target = el.getAttribute('target') || '';
       if (attr && attr !== 'gs__text')
         global.popupBtnClicked(attr, target);
       return ;
     }
     
-    const { selectedEl } = global;
-    if (!selectedEl) return;
-    
     clearClass('gs_copied');
-    if (!global.selectMode) global.productInfo = getProductInfo(selectedEl, e);
+    if (!global.selectMode) global.productInfo = getProductInfo(el, global.picker);
     addClass(global.productInfo.elements, 'gs_copied');
-    clearEl(selectedEl);
     copyToTemp(global);
     console.log(global.productInfo);
     
@@ -1605,30 +1179,6 @@ const init = global => {
     if (tag === 'gs__text' || !target) {
       global.productInfo[target] = e.target.value;
       global.tempInfo[target] = e.target.value;
-    }
-  };
-
-  global.disableClick = (e) => {
-    if(global.state) {
-      e.preventDefault();
-      return false;
-    }
-  };
-
-  global.disableLinks = () => {
-    var links = document.getElementsByTagName('a');
-    for (let i = 0; i < links.length; i ++) {
-      const link = links[i];
-      if (link.getAttribute('link_to_disabled')) continue;
-      link.onclick = global.disableClick;
-      link.setAttribute('link_to_disabled', 'true');
-    }
-    links = document.getElementsByTagName('button');
-    for (let i = 0; i < links.length; i ++) {
-      const link = links[i];
-      if (link.getAttribute('link_to_disabled')) continue;
-      link.onclick = global.disableClick;
-      link.setAttribute('link_to_disabled', 'true');
     }
   };
 

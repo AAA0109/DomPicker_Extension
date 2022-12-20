@@ -127,11 +127,6 @@ path-parse@^1.0.7:
   resolved "https://registry.yarnpkg.com/path-parse/-/path-parse-1.0.7.tgz#fbc114b60ca42b30d9daf5858e4bd68bbedb6735"
   integrity sha512-LDJzPVEEEPR+y48z93A0Ed0yXb8pAByGWo/k5YYdYgpY2/2EsOsksJrq7lOHxryrVOn1ejG6oAp8ahvOIQD8sw==
 
-pick-dom-element@^0.2.2:
-  version "0.2.2"
-  resolved "https://registry.yarnpkg.com/pick-dom-element/-/pick-dom-element-0.2.2.tgz#e3d16416232b046daccd3942425caa7faf6fef98"
-  integrity sha512-jqied4d098a40R1LttQ3z5T5sFPEWiaLBn6yzfotGkoI1YoB7GXm5cpf+AWDYSv3xqdtsW1fa5qp4ydzrahazQ==
-
 proxy-from-env@^1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/proxy-from-env/-/proxy-from-env-1.1.0.tgz#e102f16ca355424865755d2c9e8ea4f24d58c3e2"

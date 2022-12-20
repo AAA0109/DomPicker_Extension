@@ -130,12 +130,12 @@ const checkIfDescendOf = (ch, p, signs) => {
 }
 
 const isHovered = (r, e) => {
-  const x = e.clientX, y = e.clientY;
+  const x = e.x, y = e.y;
   if (r.left <= x && r.right >= x && r.top <= y && r.bottom >= y) return true;
   return false;
 }
 
-const checkIfBetterImg = (a, b, e) => {
+const checkIfBetterImg = (a, b, mouse) => {
   if (!isVisible(a)) return false;
   if (!isVisible(b)) return true;
   if (!a.currentSrc && !a.src) return false;
@@ -143,7 +143,7 @@ const checkIfBetterImg = (a, b, e) => {
 
   const offset = 2;
   const r1 = a.getBoundingClientRect(), r2 = b.getBoundingClientRect();
-  const h1 = isHovered(r1, e), h2 = isHovered(r2, e);
+  const h1 = isHovered(r1, mouse), h2 = isHovered(r2, mouse);
   if (h1 && !h2) return true;
   if (!h1 && h2) return false;
 
@@ -242,7 +242,7 @@ export const findHref = el => {
   return '';
 }
 
-const getImgUrl = (el, e) => {
+const getImgUrl = (el, mouse) => {
   if (!el) return '';
   if (el.tagName.toLocaleLowerCase() === 'img') return el;
   const imgs = el.getElementsByTagName('img')
@@ -250,14 +250,14 @@ const getImgUrl = (el, e) => {
 
   var ret = imgs[0];
   for (let i = 1; i < imgs.length; i ++) {
-    if (checkIfBetterImg(imgs[i], ret, e)) ret = imgs[i];
+    if (checkIfBetterImg(imgs[i], ret, mouse)) ret = imgs[i];
   }
   return ret;
 }
 
-const getManualImgUrl = (el, e) => {
+const getManualImgUrl = (el, mouse) => {
   while(el.tagName !== 'body') {
-    const img = getImgUrl(el, e);
+    const img = getImgUrl(el, mouse);
     if (img) return img;
     el = el.parentNode;
   }
@@ -313,8 +313,7 @@ const getPhotos = (el) => {
   return ret;
 }
 
-const getUrl = (e) => {
-  const el = document.elementFromPoint(e.clientX, e.clientY);
+const getUrl = (el) => {
   if (!el) return '';
   return findHref(el);
 }
@@ -324,17 +323,17 @@ const getSrcFromImgTag = (el) => {
   return (el.currentSrc || el.src || '').split(' ')[0]
 }
 
-export const getProductInfo = (el, e) => {
+export const getProductInfo = (el, picker) => {
   const p = getProductRootElement(el);
 
-  const e_img = getImgUrl(p, e);
+  const e_img = getImgUrl(p, { x: picker.mouseX, y: picker.mouseY });
   const e_name = getName(p);
   const e_price = getPrice(p);
   const e_description = getDescriptin(p);
   const e_photos = getPhotos(p);
   const name = getText(e_name);
   const img = getSrcFromImgTag(e_img);
-  const url = getUrl(e);
+  const url = getUrl(el);
   const price = getText(e_price);
   const description = getEnteredText(e_description);
   const r_photos = {};
@@ -353,7 +352,7 @@ export const getProductInfo = (el, e) => {
   }
 }
 
-export const getProductInfoIndividual = (el, e, global) => {
+export const getProductInfoIndividual = (el, picker, global) => {
   if (!global.productInfo) global.productInfo = {};
   const productInfo = global.productInfo;
   if (!productInfo.elements) productInfo.elements = {};
@@ -365,7 +364,7 @@ export const getProductInfoIndividual = (el, e, global) => {
 
   switch(global.selectMode) {
     case 'img':
-      const e_img = getManualImgUrl(el, e);
+      const e_img = getManualImgUrl(el, { x: picker.mouseX, y: picker.mouseY });
       const img = getSrcFromImgTag(e_img);
       productInfo.elements.e_img = e_img;
       productInfo.img = img;
@@ -384,7 +383,7 @@ export const getProductInfoIndividual = (el, e, global) => {
       break;
     case 'photos':
       const idx = productInfo.photos.length - 1;
-      const e_photo = getManualImgUrl(el, e);
+      const e_photo = getManualImgUrl(el, { x: picker.mouseX, y: picker.mouseY });
       const photo = (e_photo.currentSrc || e_photo.src || '').split(' ')[0];
       productInfo.elements['photo' + idx] = e_photo
       productInfo.photos[idx] = photo;

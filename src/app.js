@@ -1,4 +1,5 @@
 import debounce from "lodash/debounce";
+import { ElementPicker } from "./dom-pick";
 import { addStyle } from "./addStyle";
 import { findHref, getProductInfo, getProductInfoIndividual } from "./scrap";
 import { initMessage, showMessage, showConfirm, hideMessage, hideConfirm } from "./info";
@@ -7,7 +8,6 @@ const API_URL = 'https://ollacart.herokuapp.com/api/'
 // const API_URL2 = 'http://localhost:5000/api/'
 const API_URL2 = 'https://ollacart-dev.herokuapp.com/api/'
 
-const clearEl = el => el && el.classList.remove("gs_hover");
 const clearClass = (cl) => {
   const itms = document.getElementsByClassName(cl);
   for (let i = itms.length - 1 ; i >= 0; i --) itms[i].classList.remove(cl);
@@ -36,8 +36,6 @@ const copyFromTemp = (global) => {
   if (i === keys.length) return;
   global.productInfo = {
     ...global.tempInfo,
-    // elements: {...(global.tempInfo.elements || {})},
-    // photos: [...(global.tempInfo.photos || [])]
   }
   showMessage(global);
 }
@@ -46,15 +44,17 @@ export const toggle = global => {
   const state = !global.state;
   global.state = state;
   global.selectMode = null;
-  const action = state ? "addEventListener" : "removeEventListener";
-  document[action]("mouseover", global.selectElement);
-  document[action]("mouseout", global.clearElDebounce);
-  document[action]("mousedown", global.domPick);
-  document[action]("input", global.inputValueChanged);
-  if (state) global.disableLinks()
+
+  if (state) {
+    global.picker.start({
+      onHover: global.selectElement,
+      onClick: global.domPick
+    });
+  } else {
+    global.picker.stop();
+  }
 
   if (!state) {
-    clearEl(global.selectedEl);
     clearClass('gs_copied');
     hideMessage(global);
     hideConfirm(global);
@@ -64,13 +64,16 @@ export const toggle = global => {
 export const init = global => {
   global.init = true;
   global.state = false;
-  global.selectedEl = null;
   global.selectMode = null;
   global.productInfo = {};
   global.tempInfo = {};
+  global.picker = new ElementPicker({
+    style: {
+      background: "rgba(153, 235, 255, 0.5)",
+      borderColor: "yellow"
+    },
+  });
   global.items = ['img', 'name', 'price', 'description', 'photos'];
-  
-  global.clearElDebounce = debounce(() => clearEl(global.selectedEl) && hideMessage(global), 200);
 
   global.sendAPI = () => {
     const productInfo = global.productInfo;
@@ -148,46 +151,39 @@ export const init = global => {
     showMessage(global);
   }
   
-  global.selectElement = debounce(e => {
-    if (e.target.tagName.toLocaleLowerCase() === 'html') return;
-    if (global.finish || !global.popup || global.confirm.contains(e.target)) return;
-    if (global.popup.contains(e.target)) {
+  global.selectElement = el => {
+    console.log(global.picker);
+    if (!el) return;
+    if (el.tagName.toLocaleLowerCase() === 'html') return;
+    if (global.finish || !global.popup || global.confirm.contains(el)) return;
+    if (global.popup.contains(el)) {
       copyFromTemp(global);
       return;
     }
-    if (global.selectedEl !== e.target) {
-      clearEl(global.selectedEl);
-    }
-    global.selectedEl = e.target;
-    const selectedEl = global.selectedEl;
-    selectedEl.classList.add("gs_hover");
     
     if (!global.selectMode) {
-      global.productInfo = getProductInfo(selectedEl, e);
+      global.productInfo = getProductInfo(el, global.picker);
     } else {
-      getProductInfoIndividual(selectedEl, e, global);
+      getProductInfoIndividual(el, global.picker, global);
     }
     showMessage(global);
-  }, 200);
+  }
   
-  global.domPick = (e) => {
-    if (e.target.tagName.toLocaleLowerCase() === 'html') return;
+  global.domPick = (el) => {
+    if (!el) return ;
+    if (el.tagName.toLocaleLowerCase() === 'html') return;
     if (global.finish || !global.popup) return;
-    if (global.popup.contains(e.target) || global.confirm.contains(e.target)) {
-      const attr = e.target.getAttribute('tag')
-      const target = e.target.getAttribute('target') || ''
+    if (global.popup.contains(el) || global.confirm.contains(el)) {
+      const attr = el.getAttribute('tag')
+      const target = el.getAttribute('target') || ''
       if (attr && attr !== 'gs__text')
         global.popupBtnClicked(attr, target);
       return ;
     }
     
-    const { selectedEl } = global;
-    if (!selectedEl) return;
-    
     clearClass('gs_copied');
-    if (!global.selectMode) global.productInfo = getProductInfo(selectedEl, e);
+    if (!global.selectMode) global.productInfo = getProductInfo(el, global.picker);
     addClass(global.productInfo.elements, 'gs_copied')
-    clearEl(selectedEl);
     copyToTemp(global);
     console.log(global.productInfo);
     
@@ -212,30 +208,6 @@ export const init = global => {
     if (tag === 'gs__text' || !target) {
       global.productInfo[target] = e.target.value;
       global.tempInfo[target] = e.target.value;
-    }
-  }
-
-  global.disableClick = (e) => {
-    if(global.state) {
-      e.preventDefault();
-      return false;
-    }
-  }
-
-  global.disableLinks = () => {
-    var links = document.getElementsByTagName('a');
-    for (let i = 0; i < links.length; i ++) {
-      const link = links[i];
-      if (link.getAttribute('link_to_disabled')) continue;
-      link.onclick = global.disableClick;
-      link.setAttribute('link_to_disabled', 'true');
-    }
-    links = document.getElementsByTagName('button');
-    for (let i = 0; i < links.length; i ++) {
-      const link = links[i];
-      if (link.getAttribute('link_to_disabled')) continue;
-      link.onclick = global.disableClick;
-      link.setAttribute('link_to_disabled', 'true');
     }
   }
 
