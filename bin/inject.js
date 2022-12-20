@@ -1021,8 +1021,10 @@ const toggle = global => {
       onHover: global.selectElement,
       onClick: global.domPick
     });
+    document.addEventListener('input', global.inputValueChanged);
   } else {
     global.picker.stop();
+    document.removeEventListener('input', global.inputValueChanged);
   }
 
   if (!state) {
@@ -1123,7 +1125,6 @@ const init = global => {
   };
   
   global.selectElement = el => {
-    console.log(global.picker);
     if (!el) return;
     if (el.tagName.toLocaleLowerCase() === 'html') return;
     if (global.finish || !global.popup || global.confirm.contains(el)) return;
@@ -1173,7 +1174,6 @@ const init = global => {
   };
 
   global.inputValueChanged = (e) => {
-    console.log(e.target.value);
     const tag = e.target.getAttribute("tag");
     const target = e.target.getAttribute("target");
     if (tag === 'gs__text' || !target) {
