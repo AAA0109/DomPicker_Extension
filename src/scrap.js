@@ -135,11 +135,15 @@ const isHovered = (r, e) => {
   return false;
 }
 
-const checkIfBetterImg = (a, b, mouse) => {
+const checkIfBetterImg = (a, b, mouse, excepts = []) => {
   if (!isVisible(a)) return false;
   if (!isVisible(b)) return true;
-  if (!a.currentSrc && !a.src) return false;
-  if (!b.currentSrc && !b.srt) return true;
+  const a_src = getSrcFromImgTag(a), b_src = getSrcFromImgTag(b);
+  if (!a_src) return false;
+  if (!b_src) return true;
+  const excepts_src = excepts.map(itm => getSrcFromImgTag(itm));
+  if (excepts_src.includes(a_src)) return false;
+  if (excepts_src.includes(b_src)) return true;
 
   const offset = 2;
   const r1 = a.getBoundingClientRect(), r2 = b.getBoundingClientRect();
@@ -203,7 +207,7 @@ const checkIfBetterTitle = (a, b, p) => {
   const fontSize1 = parseFloat(window.getComputedStyle(a).fontSize) || 0,
     fontSize2 = parseFloat(window.getComputedStyle(b).fontSize) || 0;
   
-  if (fontSize1 > fontSize2 * 1.1) return true;
+  if (fontSize1 > fontSize2 * 1.2) return true;
   return false;
 }
 
@@ -242,7 +246,7 @@ export const findHref = el => {
   return '';
 }
 
-const getImgUrl = (el, mouse) => {
+const getImgUrl = (el, mouse, excepts = []) => {
   if (!el) return '';
   if (el.tagName.toLocaleLowerCase() === 'img') return el;
   const imgs = el.getElementsByTagName('img')
@@ -250,7 +254,7 @@ const getImgUrl = (el, mouse) => {
 
   var ret = imgs[0];
   for (let i = 1; i < imgs.length; i ++) {
-    if (checkIfBetterImg(imgs[i], ret, mouse)) ret = imgs[i];
+    if (checkIfBetterImg(imgs[i], ret, mouse, excepts)) ret = imgs[i];
   }
   return ret;
 }
@@ -300,15 +304,12 @@ const getDescriptin = (el) => {
   return ret;
 }
 
-const getPhotos = (el) => {
+const getPhotos = (el, mouse) => {
   const ret = [];
-  const itms = el.getElementsByTagName("img");
-  for (let i = 0; i < itms.length; i ++) {
-    const r = itms[i].getBoundingClientRect();
-    if (r.width * r.height >= 6400) {
-      if (ret.findIndex(itm => getSrcFromImgTag(itm) === getSrcFromImgTag(itms[i])) > -1) continue;
-      ret.push(itms[i]);
-    }
+  for (let i = 0; i < 4; i ++) {
+    const img = getImgUrl(el, mouse, ret);
+    if (ret.findIndex(itm => getSrcFromImgTag(itm) === getSrcFromImgTag(img)) > -1) break;
+    ret.push(img);
   }
   return ret;
 }
@@ -330,7 +331,7 @@ export const getProductInfo = (el, picker) => {
   const e_name = getName(p);
   const e_price = getPrice(p);
   const e_description = getDescriptin(p);
-  const e_photos = getPhotos(p);
+  const e_photos = getPhotos(p, { x: picker.mouseX, y: picker.mouseY });
   const name = getText(e_name);
   const img = getSrcFromImgTag(e_img);
   const url = getUrl(el);
