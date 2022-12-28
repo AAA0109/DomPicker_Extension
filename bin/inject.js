@@ -645,8 +645,12 @@ const getProductInfoIndividual = (el, picker, global) => {
 };
 
 const STYLES = `
+  .gs_confirm_container, .gs_message {
+    box-sizing: border-box;
+  }
   .gs_confirm_container *, .gs_message * {
     color: black;
+    box-sizing: border-box;
   }
   .gs_confirm_container {
     position: fixed;
@@ -860,6 +864,7 @@ const STYLES = `
     height: 300px;
     min-height: 300px;
     max-height: 300px;
+    font-size: 16px;
   }
 
   .gs_confirm_content::-webkit-scrollbar, .gs_message_content::-webkit-scrollbar {
