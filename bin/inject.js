@@ -463,6 +463,14 @@ const checkIfBetterTitle = (a, b, p) => {
   return false;
 };
 
+const getCurrencyNumber = (str) => {
+  try {
+    return parseFloat(str.replace(/[^0-9.]+/g,"")) || 0;
+  } catch (ex) {
+    return 0;
+  }
+};
+
 const checkIfBetterPrice = (a, b, p) => {
   const txt1 = getText(a), txt2 = getText(b);
   const isPrice1 = checkIfPrice(txt1), isPrice2 = checkIfPrice(txt2);
@@ -587,7 +595,7 @@ const getProductInfo = (el, picker) => {
   const name = getText(e_name);
   const img = getSrcFromImgTag(e_img);
   const url = getUrl(el);
-  const price = getText(e_price);
+  const price = getCurrencyNumber(getText(e_price));
   const description = getEnteredText(e_description);
   const r_photos = {};
   const photos = e_photos.map((p, idx) => {
@@ -632,7 +640,7 @@ const getProductInfoIndividual = (el, picker, global) => {
       break;
     case 'price':
       productInfo.elements.e_price = el;
-      productInfo.price = getFText(el);
+      productInfo.price = getCurrencyNumber(getFText(el));
       break;
     case 'photos':
       const idx = productInfo.photos.length - 1;
@@ -664,8 +672,8 @@ const STYLES = `
   }
   .gs_confirm_container.gs_hide {
     opacity: 0;
-    transition: opacity 3s;
-    transition-delay: 3s;
+    transition: opacity 2s;
+    transition-delay: 4s;
   }
   .gs_message, .gs_confirm {
     position: fixed;
@@ -748,6 +756,7 @@ const STYLES = `
     font-size: 20px;
     font-weight: bold;
     white-space: nowrap;
+    cursor: pointer;
   }
   .gs_message_mask {
     position: absolute;
@@ -855,9 +864,11 @@ const STYLES = `
     text-align: center;
   }
   .gs_go_ollacart {
-    margin-top: 25px;
+    margin-top: 20px;
     font-size: 20px;
     line-height: 25px;
+    cursor: pointer;
+    color: lightseagreen;
   }
   .gs_textarea {
     width: 100%;
@@ -933,7 +944,7 @@ const showConfirm = global => {
 
   const info = global.productInfo;
   let html = `<div class="gs_confirm"><div class="gs_confirm_content">`;
-  html += `<div class="gs_ollacart_img"><img src="${info.img}" /><p class="gs_text_center gs_go_ollacart">Go to <a href="https://www.ollacart.com" target="_blank">OllaCart</a></p></div>`;
+  html += `<div class="gs_ollacart_img"><img src="${info.img}" /><p class="gs_text_center gs_go_ollacart" tag="gs__goollacart">Go to  OllaCart</p></div>`;
   html += `<div class="gs_confirm_right"><div class="gs_name_price"><span>${info.name}</span><span>${info.price || ''}</span></div>`;
   if (info.description) html += `<div class="gs_description">${info.description}</div>`;
   for (let i = 0; info.photos && (i < info.photos.length); i ++ ) {
@@ -952,7 +963,7 @@ const showConfirm = global => {
   // html += `<div class="gs_message_over">You selected item</div>`;
   html += `</div>`;
 
-  if (global.finish) html += `<div class="gs_message_finish">Added to OllaCart</div>`;
+  if (global.finish) html += `<div class="gs_message_finish" tag="gs__goollacart">Added to OllaCart</div>`;
 
   global.confirm.innerHTML = html;
   global.confirm.classList.toggle("gs_show", true);
@@ -982,8 +993,8 @@ const initMessage = global => {
   document.body.appendChild(global.confirm);
 };
 
-// const API_URL2 = 'http://localhost:5000/api/'
-const API_URL2 = 'https://ollacart-dev.herokuapp.com/api/';
+const API_URL2 = 'http://localhost:5000/api/';
+// const API_URL2 = 'https://ollacart-dev.herokuapp.com/api/'
 
 const clearClass = (cl) => {
   const itms = document.getElementsByClassName(cl);
@@ -1084,6 +1095,10 @@ const init = global => {
 
   global.popupBtnClicked = (attr, target) => {
     copyFromTemp(global);
+    if (attr === 'gs__goollacart') {
+      window.open('https://www.ollacart.com', '_blank');
+      return;
+    }
     if (attr === 'gs__confirm') {
       global.sendAPI();
       global.finish = true;
@@ -1092,7 +1107,7 @@ const init = global => {
         global.finish = false;
         toggle(global);
         global.sendClose();
-      }, 6000);
+      }, 5000);
       return;
     }
     if (attr === 'gs__manual') {
@@ -1150,7 +1165,7 @@ const init = global => {
   global.domPick = (el) => {
     if (!el) return ;
     if (el.tagName.toLocaleLowerCase() === 'html') return;
-    if (global.finish || !global.popup) return;
+    if (!global.popup) return;
     if (global.popup.contains(el) || global.confirm.contains(el)) {
       const attr = el.getAttribute('tag');
       const target = el.getAttribute('target') || '';

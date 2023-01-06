@@ -20,8 +20,8 @@ const STYLES = `
   }
   .gs_confirm_container.gs_hide {
     opacity: 0;
-    transition: opacity 3s;
-    transition-delay: 3s;
+    transition: opacity 2s;
+    transition-delay: 4s;
   }
   .gs_message, .gs_confirm {
     position: fixed;
@@ -104,6 +104,7 @@ const STYLES = `
     font-size: 20px;
     font-weight: bold;
     white-space: nowrap;
+    cursor: pointer;
   }
   .gs_message_mask {
     position: absolute;
@@ -211,9 +212,11 @@ const STYLES = `
     text-align: center;
   }
   .gs_go_ollacart {
-    margin-top: 25px;
+    margin-top: 20px;
     font-size: 20px;
     line-height: 25px;
+    cursor: pointer;
+    color: lightseagreen;
   }
   .gs_textarea {
     width: 100%;
@@ -289,7 +292,7 @@ export const showConfirm = global => {
 
   const info = global.productInfo;
   let html = `<div class="gs_confirm"><div class="gs_confirm_content">`
-  html += `<div class="gs_ollacart_img"><img src="${info.img}" /><p class="gs_text_center gs_go_ollacart">Go to <a href="https://www.ollacart.com" target="_blank">OllaCart</a></p></div>`;
+  html += `<div class="gs_ollacart_img"><img src="${info.img}" /><p class="gs_text_center gs_go_ollacart" tag="gs__goollacart">Go to  OllaCart</p></div>`;
   html += `<div class="gs_confirm_right"><div class="gs_name_price"><span>${info.name}</span><span>${info.price || ''}</span></div>`;
   if (info.description) html += `<div class="gs_description">${info.description}</div>`
   for (let i = 0; info.photos && (i < info.photos.length); i ++ ) {
@@ -308,7 +311,7 @@ export const showConfirm = global => {
   // html += `<div class="gs_message_over">You selected item</div>`;
   html += `</div>`
 
-  if (global.finish) html += `<div class="gs_message_finish">Added to OllaCart</div>`;
+  if (global.finish) html += `<div class="gs_message_finish" tag="gs__goollacart">Added to OllaCart</div>`;
 
   global.confirm.innerHTML = html;
   global.confirm.classList.toggle("gs_show", true);

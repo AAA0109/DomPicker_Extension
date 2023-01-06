@@ -5,8 +5,8 @@ import { findHref, getProductInfo, getProductInfoIndividual } from "./scrap";
 import { initMessage, showMessage, showConfirm, hideMessage, hideConfirm } from "./info";
 
 const API_URL = 'https://ollacart.herokuapp.com/api/'
-// const API_URL2 = 'http://localhost:5000/api/'
-const API_URL2 = 'https://ollacart-dev.herokuapp.com/api/'
+const API_URL2 = 'http://localhost:5000/api/'
+// const API_URL2 = 'https://ollacart-dev.herokuapp.com/api/'
 
 const clearClass = (cl) => {
   const itms = document.getElementsByClassName(cl);
@@ -107,6 +107,10 @@ export const init = global => {
 
   global.popupBtnClicked = (attr, target) => {
     copyFromTemp(global);
+    if (attr === 'gs__goollacart') {
+      window.open('https://www.ollacart.com', '_blank');
+      return;
+    }
     if (attr === 'gs__confirm') {
       global.sendAPI();
       global.finish = true;
@@ -115,7 +119,7 @@ export const init = global => {
         global.finish = false;
         toggle(global);
         global.sendClose();
-      }, 6000);
+      }, 5000);
       return;
     }
     if (attr === 'gs__manual') {
@@ -173,10 +177,10 @@ export const init = global => {
   global.domPick = (el) => {
     if (!el) return ;
     if (el.tagName.toLocaleLowerCase() === 'html') return;
-    if (global.finish || !global.popup) return;
+    if (!global.popup) return;
     if (global.popup.contains(el) || global.confirm.contains(el)) {
       const attr = el.getAttribute('tag')
-      const target = el.getAttribute('target') || ''
+      const target = el.getAttribute('target') || '';
       if (attr && attr !== 'gs__text')
         global.popupBtnClicked(attr, target);
       return ;

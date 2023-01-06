@@ -211,6 +211,14 @@ const checkIfBetterTitle = (a, b, p) => {
   return false;
 }
 
+const getCurrencyNumber = (str) => {
+  try {
+    return parseFloat(str.replace(/[^0-9.]+/g,"")) || 0;
+  } catch (ex) {
+    return 0;
+  }
+}
+
 const checkIfBetterPrice = (a, b, p) => {
   const txt1 = getText(a), txt2 = getText(b);
   const isPrice1 = checkIfPrice(txt1), isPrice2 = checkIfPrice(txt2);
@@ -335,7 +343,7 @@ export const getProductInfo = (el, picker) => {
   const name = getText(e_name);
   const img = getSrcFromImgTag(e_img);
   const url = getUrl(el);
-  const price = getText(e_price);
+  const price = getCurrencyNumber(getText(e_price));
   const description = getEnteredText(e_description);
   const r_photos = {};
   const photos = e_photos.map((p, idx) => {
@@ -380,7 +388,7 @@ export const getProductInfoIndividual = (el, picker, global) => {
       break;
     case 'price':
       productInfo.elements.e_price = el;
-      productInfo.price = getFText(el);
+      productInfo.price = getCurrencyNumber(getFText(el));
       break;
     case 'photos':
       const idx = productInfo.photos.length - 1;
