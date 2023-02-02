@@ -2,11 +2,11 @@ import debounce from "lodash/debounce";
 import { ElementPicker } from "./dom-pick";
 import { addStyle } from "./addStyle";
 import { findHref, getProductInfo, getProductInfoIndividual } from "./scrap";
-import { initMessage, showMessage, showConfirm, hideMessage, hideConfirm } from "./info";
+import { initMessage, showMessage, showConfirm, showTooltip, hideMessage, hideConfirm, hideTooltip } from "./info";
 
 const API_URL = 'https://ollacart.herokuapp.com/api/'
-const API_URL2 = 'http://localhost:5000/api/'
-// const API_URL2 = 'https://ollacart-dev.herokuapp.com/api/'
+// const API_URL2 = 'http://localhost:5000/api/'
+const API_URL2 = 'https://ollacart-dev.herokuapp.com/api/'
 
 const clearClass = (cl) => {
   const itms = document.getElementsByClassName(cl);
@@ -51,15 +51,18 @@ export const toggle = global => {
       onClick: global.domPick
     });
     document.addEventListener('input', global.inputValueChanged);
+    document.addEventListener('mousemove', global.onMouseMove);
   } else {
     global.picker.stop();
     document.removeEventListener('input', global.inputValueChanged);
+    document.removeEventListener('mousemove', global.onMouseMove);
   }
 
   if (!state) {
     clearClass('gs_copied');
     hideMessage(global);
     hideConfirm(global);
+    hideTooltip(global);
   }
 };
 
@@ -84,7 +87,7 @@ export const init = global => {
     const { name, price, description, photos } = productInfo;
     const photo = productInfo.img;
     const url = productInfo.url || findHref(productInfo.elements.e_img) || findHref(productInfo.elements.e_name) || location.href;
-    console.log('url', url);
+    // console.log('url', url);
     
     // fetch(API_URL + 'extension/create', {
     //   method: 'POST',
@@ -107,6 +110,11 @@ export const init = global => {
 
   global.popupBtnClicked = (attr, target) => {
     copyFromTemp(global);
+    if (attr === 'gs__close') {
+      toggle(global);
+      global.sendClose();
+      return;
+    }
     if (attr === 'gs__goollacart') {
       window.open('https://www.ollacart.com', '_blank');
       return;
@@ -114,6 +122,7 @@ export const init = global => {
     if (attr === 'gs__confirm') {
       global.sendAPI();
       global.finish = true;
+      global.picker.stop();
       showConfirm(global);
       setTimeout(() => { 
         global.finish = false;
@@ -190,7 +199,6 @@ export const init = global => {
     if (!global.selectMode) global.productInfo = getProductInfo(el, global.picker);
     addClass(global.productInfo.elements, 'gs_copied')
     copyToTemp(global);
-    console.log(global.productInfo);
     
     if (global.selectMode) {
       let idx = global.items.indexOf(global.selectMode) + 1;
@@ -213,6 +221,17 @@ export const init = global => {
       global.productInfo[target] = e.target.value;
       global.tempInfo[target] = e.target.value;
     }
+  }
+
+  global.onMouseMove = (e) => {
+    if(global.selectMode || global.showConfirm) {
+      hideTooltip(global);
+      return ;
+    }
+    console.log(e);
+    global.tooltip.style.left = e.clientX + 'px';
+    global.tooltip.style.top = e.clientY + 'px';
+    showTooltip(global);
   }
 
   addStyle(`

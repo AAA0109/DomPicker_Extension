@@ -564,13 +564,14 @@ const getDescriptin = (el) => {
   return ret;
 };
 
-const getPhotos = (el, mouse) => {
-  const ret = [];
+const getPhotos = (el, mouse, photo) => {
+  const ret = [photo];
   for (let i = 0; i < 4; i ++) {
     const img = getImgUrl(el, mouse, ret);
-    if (ret.findIndex(itm => getSrcFromImgTag(itm) === getSrcFromImgTag(img)) > -1) break;
+    if (ret.findIndex(itm => getSrcFromImgTag(itm).split('?')[0] === getSrcFromImgTag(img).split('?')[0]) > -1) break;
     ret.push(img);
   }
+  ret.shift();
   return ret;
 };
 
@@ -591,7 +592,7 @@ const getProductInfo = (el, picker) => {
   const e_name = getName(p);
   const e_price = getPrice(p);
   const e_description = getDescriptin(p);
-  const e_photos = getPhotos(p, { x: picker.mouseX, y: picker.mouseY });
+  const e_photos = getPhotos(p, { x: picker.mouseX, y: picker.mouseY }, e_img);
   const name = getText(e_name);
   const img = getSrcFromImgTag(e_img);
   const url = getUrl(el);
@@ -653,12 +654,30 @@ const getProductInfoIndividual = (el, picker, global) => {
 };
 
 const STYLES = `
-  .gs_confirm_container, .gs_message {
-    box-sizing: border-box;
+  .gs_confirm_container, .gs_message, .gs_tooltip {
+    box-sizing: border-box !important;
   }
-  .gs_confirm_container *, .gs_message * {
+  .gs_confirm_container *, .gs_message *, .gs_tooltip * {
     color: black;
-    box-sizing: border-box;
+    box-sizing: border-box !important;
+  }
+  .gs_tooltip {
+    position: fixed;
+    z-index: 99999999999999;
+    max-width: 500px;
+    width: 80%;
+    pointer-events: none;
+    display: none;
+    
+    background-color: #ffa778;
+    padding: 5px 10px;
+    box-shadow: 1px 1px 5px 2px #260101;
+    line-height: 16px;
+    font-size: 16px;
+    color: black;
+  }
+  .gs_tooltip.gs_show {
+    display: block;
   }
   .gs_confirm_container {
     position: fixed;
@@ -678,7 +697,7 @@ const STYLES = `
   .gs_message, .gs_confirm {
     position: fixed;
     box-shadow: 0 2px 3px 0 rgba(0, 0, 0, 0.25);
-    padding: 20px 10px 8px;
+    padding: 30px 10px 8px;
     background-color: #fff !important;
     border: 4px solid #eee;
   }
@@ -695,7 +714,8 @@ const STYLES = `
     overflow-y: auto;
     display: flex;
     gap: 20px;
-    flex-wrap: wrap;    
+    flex-wrap: wrap;
+    align-items: flex-start;
   }
   @media screen and (max-width: 768px) {
     .gs_confirm {
@@ -726,18 +746,23 @@ const STYLES = `
   }
   .gs_confirm .gs_ollacart_img {
     width: 350px;
+    position: sticky;
+    top: 0;
   }
   .gs_name_price {
     display: flex;
     justify-content: space-between;
-    flex-wrap: wrap;
     font-size: 16px;
     color: black;
+    gap: 10px;
   }
   .gs_confirm .gs_name_price {
     font-size: 20px;
     font-weight: bold;
     color: #303030;
+  }
+  .gs_confirm .gs_price {
+    color: #004400;
   }
   .gs_description {
     font-size: 14px;
@@ -878,6 +903,19 @@ const STYLES = `
     font-size: 16px;
   }
 
+  .gs_close {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    cursor: pointer;
+  }
+  .gs_close:hover {
+    opacity: 0.8;
+  }
+  .gs_close img {
+    width: 20px;
+  }
+
   .gs_confirm_content::-webkit-scrollbar, .gs_message_content::-webkit-scrollbar {
     width: 7px;
   }
@@ -941,11 +979,12 @@ const showMessage = (global) => {
 
 const showConfirm = global => {
   hideMessage(global);
+  hideTooltip(global);
 
   const info = global.productInfo;
-  let html = `<div class="gs_confirm"><div class="gs_confirm_content">`;
+  let html = `<div class="gs_confirm"><div class="gs_close"><img tag="gs__close" src="https://cdn.icon-icons.com/icons2/624/PNG/64/Delete-80_icon-icons.com_57340.png" alt="close"/></div><div class="gs_confirm_content">`;
   html += `<div class="gs_ollacart_img"><img src="${info.img}" /><p class="gs_text_center gs_go_ollacart" tag="gs__goollacart">Go to  OllaCart</p></div>`;
-  html += `<div class="gs_confirm_right"><div class="gs_name_price"><span>${info.name}</span><span>${info.price || ''}</span></div>`;
+  html += `<div class="gs_confirm_right"><div class="gs_name_price"><span>${info.name}</span><span class="gs_price">$${info.price || '0'}</span></div>`;
   if (info.description) html += `<div class="gs_description">${info.description}</div>`;
   for (let i = 0; info.photos && (i < info.photos.length); i ++ ) {
     if (i === 0) html += `<div class="gs_addtional_photos">`;
@@ -973,6 +1012,14 @@ const showConfirm = global => {
   else global.confirm.classList.toggle("gs_hide", false);
 };
 
+const showTooltip = global => {
+  global.tooltip.classList.toggle("gs_show", true);
+};
+
+const hideTooltip = global => {
+  global.tooltip.classList.toggle("gs_show", false);
+};
+
 const hideMessage = global => {
   global.popup.classList.toggle("gs_show", false);
 };
@@ -991,10 +1038,15 @@ const initMessage = global => {
   global.confirm = document.createElement("div");
   global.confirm.className = "gs_confirm_container";
   document.body.appendChild(global.confirm);
+  
+  global.tooltip = document.createElement("div");
+  global.tooltip.innerHTML = 'Click whenever OllaCart shows appropriate product information. You can manually select and edit information after.';
+  global.tooltip.className = "gs_tooltip";
+  document.body.appendChild(global.tooltip);
 };
 
-const API_URL2 = 'http://localhost:5000/api/';
-// const API_URL2 = 'https://ollacart-dev.herokuapp.com/api/'
+// const API_URL2 = 'http://localhost:5000/api/'
+const API_URL2 = 'https://ollacart-dev.herokuapp.com/api/';
 
 const clearClass = (cl) => {
   const itms = document.getElementsByClassName(cl);
@@ -1039,15 +1091,18 @@ const toggle = global => {
       onClick: global.domPick
     });
     document.addEventListener('input', global.inputValueChanged);
+    document.addEventListener('mousemove', global.onMouseMove);
   } else {
     global.picker.stop();
     document.removeEventListener('input', global.inputValueChanged);
+    document.removeEventListener('mousemove', global.onMouseMove);
   }
 
   if (!state) {
     clearClass('gs_copied');
     hideMessage(global);
     hideConfirm(global);
+    hideTooltip(global);
   }
 };
 
@@ -1072,7 +1127,7 @@ const init = global => {
     const { name, price, description, photos } = productInfo;
     const photo = productInfo.img;
     const url = productInfo.url || findHref(productInfo.elements.e_img) || findHref(productInfo.elements.e_name) || location.href;
-    console.log('url', url);
+    // console.log('url', url);
     
     // fetch(API_URL + 'extension/create', {
     //   method: 'POST',
@@ -1095,6 +1150,11 @@ const init = global => {
 
   global.popupBtnClicked = (attr, target) => {
     copyFromTemp(global);
+    if (attr === 'gs__close') {
+      toggle(global);
+      global.sendClose();
+      return;
+    }
     if (attr === 'gs__goollacart') {
       window.open('https://www.ollacart.com', '_blank');
       return;
@@ -1102,6 +1162,7 @@ const init = global => {
     if (attr === 'gs__confirm') {
       global.sendAPI();
       global.finish = true;
+      global.picker.stop();
       showConfirm(global);
       setTimeout(() => { 
         global.finish = false;
@@ -1178,7 +1239,6 @@ const init = global => {
     if (!global.selectMode) global.productInfo = getProductInfo(el, global.picker);
     addClass(global.productInfo.elements, 'gs_copied');
     copyToTemp(global);
-    console.log(global.productInfo);
     
     if (global.selectMode) {
       let idx = global.items.indexOf(global.selectMode) + 1;
@@ -1203,6 +1263,17 @@ const init = global => {
     }
   };
 
+  global.onMouseMove = (e) => {
+    if(global.selectMode || global.showConfirm) {
+      hideTooltip(global);
+      return ;
+    }
+    console.log(e);
+    global.tooltip.style.left = e.clientX + 'px';
+    global.tooltip.style.top = e.clientY + 'px';
+    showTooltip(global);
+  };
+
   addStyle(`
     .gs_hover {
       border: 2px solid #cdcdcd !important;
@@ -1221,24 +1292,24 @@ const init = global => {
 
 !(() => {
   const global = window.__gs = window.__gs || {};
-  console.log('[Ollacart] Init', global);
+  // console.log('[Ollacart] Init', global);
   if (!global.init) {
-    console.log("[Ollacart Selector]: Started");
+    // console.log("[Ollacart Selector]: Started");
     init(global);
 
     global.sendClose = () => {
       chrome.runtime.sendMessage({type: "close"}, function(response) {
-        console.log(response);
+        // console.log(response);
       });  
     };
 
     chrome.runtime.sendMessage({type: "init"}, function(response) {
-      console.log(response);
+      // console.log(response);
     });
     
     chrome.runtime.onMessage.addListener(
       function(request, sender, sendResponse) {
-        console.log(request);
+        // console.log(request);
         switch(request.type) {
           case 'get_state':
             sendResponse(global.state);

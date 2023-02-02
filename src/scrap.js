@@ -312,13 +312,14 @@ const getDescriptin = (el) => {
   return ret;
 }
 
-const getPhotos = (el, mouse) => {
-  const ret = [];
+const getPhotos = (el, mouse, photo) => {
+  const ret = [photo];
   for (let i = 0; i < 4; i ++) {
     const img = getImgUrl(el, mouse, ret);
-    if (ret.findIndex(itm => getSrcFromImgTag(itm) === getSrcFromImgTag(img)) > -1) break;
+    if (ret.findIndex(itm => getSrcFromImgTag(itm).split('?')[0] === getSrcFromImgTag(img).split('?')[0]) > -1) break;
     ret.push(img);
   }
+  ret.shift();
   return ret;
 }
 
@@ -339,7 +340,7 @@ export const getProductInfo = (el, picker) => {
   const e_name = getName(p);
   const e_price = getPrice(p);
   const e_description = getDescriptin(p);
-  const e_photos = getPhotos(p, { x: picker.mouseX, y: picker.mouseY });
+  const e_photos = getPhotos(p, { x: picker.mouseX, y: picker.mouseY }, e_img);
   const name = getText(e_name);
   const img = getSrcFromImgTag(e_img);
   const url = getUrl(el);
