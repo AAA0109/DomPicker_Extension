@@ -228,7 +228,6 @@ export const init = global => {
       hideTooltip(global);
       return ;
     }
-    console.log(e);
     global.tooltip.style.left = e.clientX + 'px';
     global.tooltip.style.top = e.clientY + 'px';
     showTooltip(global);

@@ -57,6 +57,7 @@ const STYLES = `
   }
   .gs_confirm_content {
     width: 730px;
+    max-width: 100%;
     max-height: calc(100vh - 150px);
     overflow-y: auto;
     display: flex;
@@ -93,8 +94,8 @@ const STYLES = `
   }
   .gs_confirm .gs_ollacart_img {
     width: 350px;
-    position: sticky;
-    top: 0;
+    /* position: sticky; */
+    /* top: 0; */
   }
   .gs_name_price {
     display: flex;
@@ -329,7 +330,7 @@ export const showConfirm = global => {
   hideTooltip(global);
 
   const info = global.productInfo;
-  let html = `<div class="gs_confirm"><div class="gs_close"><img tag="gs__close" src="https://cdn.icon-icons.com/icons2/624/PNG/64/Delete-80_icon-icons.com_57340.png" alt="close"/></div><div class="gs_confirm_content">`
+  let html = `<div class="gs_confirm"><div class="gs_close"><img tag="gs__close" src="https://i.postimg.cc/Wb3vQQxW/close-icon.png" alt="close"/></div><div class="gs_confirm_content">`
   html += `<div class="gs_ollacart_img"><img src="${info.img}" /><p class="gs_text_center gs_go_ollacart" tag="gs__goollacart">Go to  OllaCart</p></div>`;
   html += `<div class="gs_confirm_right"><div class="gs_name_price"><span>${info.name}</span><span class="gs_price">$${info.price || '0'}</span></div>`;
   if (info.description) html += `<div class="gs_description">${info.description}</div>`
