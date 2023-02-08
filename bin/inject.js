@@ -1202,8 +1202,14 @@ const init = global => {
     if (attr === 'gs__prev') idx --;
     if (attr === 'gs__next') idx ++;
     if (idx < 0) idx = 0;
-    if (idx >= global.items.length) idx = global.items.length - 1;
+    if (idx >= global.items.length) return idx = global.items.length - 1;
+    
     global.selectMode = global.items[idx];
+
+    if (global.selectMode === 'photos') {
+      global.productInfo.elements['photo' + global.productInfo.photos.length] = null;
+      global.productInfo.photos.push('');
+    }
     showMessage(global);
   };
   
@@ -1212,7 +1218,7 @@ const init = global => {
     if (el.tagName.toLocaleLowerCase() === 'html') return;
     if (global.finish || !global.popup || global.confirm.contains(el)) return;
     if (global.popup.contains(el)) {
-      copyFromTemp(global);
+      if(global.selectMode !== 'photos') copyFromTemp(global);
       return;
     }
     
