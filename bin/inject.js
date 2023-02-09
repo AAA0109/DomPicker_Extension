@@ -644,11 +644,10 @@ const getProductInfoIndividual = (el, picker, global) => {
       productInfo.price = getCurrencyNumber(getFText(el));
       break;
     case 'photos':
-      const idx = productInfo.photos.length - 1;
       const e_photo = getManualImgUrl(el, { x: picker.mouseX, y: picker.mouseY });
       const photo = (e_photo.currentSrc || e_photo.src || '').split(' ')[0];
-      productInfo.elements['photo' + idx] = e_photo;
-      productInfo.photos[idx] = photo;
+      productInfo.elements['temp_photo'] = e_photo;
+      productInfo.temp_photo = photo;
       break;
   }
 };
@@ -951,12 +950,15 @@ const showMessage = (global) => {
     html += `<textarea class="gs_textarea" tag="gs__text" target="${global.selectMode}">${info[global.selectMode]}</textarea>`;
   }
   if (!global.selectMode || global.selectMode === 'photos') {
+    html += `<div class="gs_addtional_photos">`;
     for (let i = 0; info.photos && (i < info.photos.length); i ++ ) {
-      if (i === 0) html += `<div class="gs_addtional_photos">`;
       if (info.photos[i])
       html += `<div><img src="${info.photos[i]}"/><div class="gs_remove_photo"><div class="gs_remove_btn" tag="gs__remove" target="${i}">-</div></div></div>`;
-      if (i === info.photos.length - 1) html += `</div>`;
     }
+    html += `</div>`;
+  }
+  if (global.selectMode === 'photos' && info.temp_photo) {
+    html += `<div class="gs_ollacart_img"><img src="${info.temp_photo}"/></div>`;
   }
 
   if (global.selectMode) {
@@ -1062,6 +1064,7 @@ const addClass = (obj, cl) => {
 };
 
 const copyToTemp = (global) => {
+  global.productInfo.temp_photo = '';
   global.tempInfo = {
     ...global.productInfo,
     elements: {...(global.productInfo.elements || {})},
@@ -1077,6 +1080,7 @@ const copyFromTemp = (global) => {
   if (i === keys.length) return;
   global.productInfo = {
     ...global.tempInfo,
+    temp_photo: ''
   };
   showMessage(global);
 };
@@ -1207,8 +1211,8 @@ const init = global => {
     global.selectMode = global.items[idx];
 
     if (global.selectMode === 'photos') {
-      global.productInfo.elements['photo' + global.productInfo.photos.length] = null;
-      global.productInfo.photos.push('');
+      global.productInfo.elements['temp_photo'] = null;
+      global.productInfo.temp_photo = '';
     }
     showMessage(global);
   };
@@ -1245,19 +1249,21 @@ const init = global => {
     clearClass('gs_copied');
     if (!global.selectMode) global.productInfo = getProductInfo(el, global.picker);
     addClass(global.productInfo.elements, 'gs_copied');
-    copyToTemp(global);
     
     if (global.selectMode) {
       let idx = global.items.indexOf(global.selectMode) + 1;
       if (global.selectMode === 'photos') {
-        global.productInfo.elements['photo' + global.productInfo.photos.length] = null;
-        global.productInfo.photos.push('');
+        global.productInfo.elements['photo' + global.productInfo.photos.length] = global.productInfo.elements['temp_photo'];
+        global.productInfo.photos.push(global.productInfo.temp_photo);
         idx --;
       }
       global.selectMode = global.items[idx];
+      copyToTemp(global);
+
       showMessage(global);
       return ;
     }
+    copyToTemp(global);
     showConfirm(global);
   };
 

@@ -298,12 +298,15 @@ export const showMessage = (global) => {
     html += `<textarea class="gs_textarea" tag="gs__text" target="${global.selectMode}">${info[global.selectMode]}</textarea>`
   }
   if (!global.selectMode || global.selectMode === 'photos') {
+    html += `<div class="gs_addtional_photos">`
     for (let i = 0; info.photos && (i < info.photos.length); i ++ ) {
-      if (i === 0) html += `<div class="gs_addtional_photos">`
       if (info.photos[i])
       html += `<div><img src="${info.photos[i]}"/><div class="gs_remove_photo"><div class="gs_remove_btn" tag="gs__remove" target="${i}">-</div></div></div>`;
-      if (i === info.photos.length - 1) html += `</div>`
     }
+    html += `</div>`
+  }
+  if (global.selectMode === 'photos' && info.temp_photo) {
+    html += `<div class="gs_ollacart_img"><img src="${info.temp_photo}"/></div>`;
   }
 
   if (global.selectMode) {

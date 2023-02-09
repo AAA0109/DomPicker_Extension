@@ -392,11 +392,10 @@ export const getProductInfoIndividual = (el, picker, global) => {
       productInfo.price = getCurrencyNumber(getFText(el));
       break;
     case 'photos':
-      const idx = productInfo.photos.length - 1;
       const e_photo = getManualImgUrl(el, { x: picker.mouseX, y: picker.mouseY });
       const photo = (e_photo.currentSrc || e_photo.src || '').split(' ')[0];
-      productInfo.elements['photo' + idx] = e_photo
-      productInfo.photos[idx] = photo;
+      productInfo.elements['temp_photo'] = e_photo
+      productInfo.temp_photo = photo;
       break;
   }
 }

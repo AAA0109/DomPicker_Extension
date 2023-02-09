@@ -21,6 +21,7 @@ const addClass = (obj, cl) => {
 }
 
 const copyToTemp = (global) => {
+  global.productInfo.temp_photo = '';
   global.tempInfo = {
     ...global.productInfo,
     elements: {...(global.productInfo.elements || {})},
@@ -36,6 +37,7 @@ const copyFromTemp = (global) => {
   if (i === keys.length) return;
   global.productInfo = {
     ...global.tempInfo,
+    temp_photo: ''
   }
   showMessage(global);
 }
@@ -166,8 +168,8 @@ export const init = global => {
     global.selectMode = global.items[idx];
 
     if (global.selectMode === 'photos') {
-      global.productInfo.elements['photo' + global.productInfo.photos.length] = null;
-      global.productInfo.photos.push('');
+      global.productInfo.elements['temp_photo'] = null;
+      global.productInfo.temp_photo = '';
     }
     showMessage(global);
   }
@@ -204,19 +206,21 @@ export const init = global => {
     clearClass('gs_copied');
     if (!global.selectMode) global.productInfo = getProductInfo(el, global.picker);
     addClass(global.productInfo.elements, 'gs_copied')
-    copyToTemp(global);
     
     if (global.selectMode) {
       let idx = global.items.indexOf(global.selectMode) + 1;
       if (global.selectMode === 'photos') {
-        global.productInfo.elements['photo' + global.productInfo.photos.length] = null;
-        global.productInfo.photos.push('');
+        global.productInfo.elements['photo' + global.productInfo.photos.length] = global.productInfo.elements['temp_photo'];
+        global.productInfo.photos.push(global.productInfo.temp_photo);
         idx --;
       }
       global.selectMode = global.items[idx];
+      copyToTemp(global);
+
       showMessage(global);
       return ;
     }
+    copyToTemp(global);
     showConfirm(global);
   };
 
