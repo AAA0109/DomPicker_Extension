@@ -8,6 +8,7 @@ export default class ElementPicker {
         };
         this.handleClick = (event) => {
             var _a;
+            if (this.target && this.target.getAttribute('gsallow')) return;
             if (this.target && ((_a = this.options) === null || _a === void 0 ? void 0 : _a.onClick)) {
                 this.options.onClick(this.target);
             }

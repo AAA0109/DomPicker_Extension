@@ -170,6 +170,7 @@ class ElementPicker {
         };
         this.handleClick = (event) => {
             var _a;
+            if (this.target && this.target.getAttribute('gsallow')) return;
             if (this.target && ((_a = this.options) === null || _a === void 0 ? void 0 : _a.onClick)) {
                 this.options.onClick(this.target);
             }
@@ -660,6 +661,7 @@ const STYLES = `
     color: black;
     box-sizing: border-box !important;
   }
+  .gs_hidden { visibility: hidden; }
   .gs_tooltip {
     position: fixed;
     z-index: 99999999999999;
@@ -916,6 +918,20 @@ const STYLES = `
     width: 20px;
   }
 
+  .gs_addtional_picker {
+    margin-top: 15px;
+    margin-left: auto;
+  }
+  .gs_addtional_picker>div {
+    margin-top: 5px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+  .gs_addtional_picker>div>* {
+    width: 70px;
+  }
+
   .gs_confirm_content::-webkit-scrollbar, .gs_message_content::-webkit-scrollbar {
     width: 7px;
   }
@@ -988,6 +1004,16 @@ const showConfirm = global => {
   let html = `<div class="gs_confirm"><div class="gs_close"><img tag="gs__close" src="https://i.postimg.cc/Wb3vQQxW/close-icon.png" alt="close"/></div><div class="gs_confirm_content">`;
   html += `<div class="gs_ollacart_img"><img src="${info.img}" /><p class="gs_text_center gs_go_ollacart" tag="gs__goollacart">Go to  OllaCart</p></div>`;
   html += `<div class="gs_confirm_right"><div class="gs_name_price"><span>${info.name}</span><span class="gs_price">$${info.price || '0'}</span></div>`;
+  html += `<div class="gs_addtional_picker">
+            <div>
+              <div><input type="checkbox" ${info.chooseColor ? 'checked' : ''} tag="gs__togglecolor" /> Color</div>
+              <input class="${info.chooseColor ? '' : 'gs_hidden'}" type="color" tag="gs__text" target="color" gsallow="true" />
+            </div>
+            <div>
+              <div><input type="checkbox" ${info.chooseSize ? 'checked' : ''} tag="gs__togglesize" /> Size</div>
+              <input class="${info.chooseSize ? '' : 'gs_hidden'}" type="text" tag="gs__text" target="size" />
+            </div>
+          </div>`;
   if (info.description) html += `<div class="gs_description">${info.description}</div>`;
   for (let i = 0; info.photos && (i < info.photos.length); i ++ ) {
     if (i === 0) html += `<div class="gs_addtional_photos">`;
@@ -1048,8 +1074,9 @@ const initMessage = global => {
   document.body.appendChild(global.tooltip);
 };
 
+// const API_URL = 'https://www.ollacart.com/api/'
+const API_URL = 'https://ollacart-dev.herokuapp.com/api/';
 // const API_URL2 = 'http://localhost:5000/api/'
-const API_URL2 = 'https://ollacart-dev.herokuapp.com/api/';
 
 const clearClass = (cl) => {
   const itms = document.getElementsByClassName(cl);
@@ -1132,29 +1159,23 @@ const init = global => {
     const { name, price, description, photos } = productInfo;
     const photo = productInfo.img;
     const url = productInfo.url || findHref(productInfo.elements.e_img) || findHref(productInfo.elements.e_name) || location.href;
+    const original_url = location.href;
+    const color = productInfo.chooseColor ? productInfo.color : '';
+    const size = productInfo.chooseSize ? productInfo.size : '';
     // console.log('url', url);
     
-    // fetch(API_URL + 'extension/create', {
-    //   method: 'POST',
-    //   headers: {
-    //     'Accept': 'application/json',
-    //     'Content-Type': 'application/json'
-    //   },
-    //   body: JSON.stringify({ photo, url, name })
-    // });
-    
-    fetch(API_URL2 + 'product/create', {
+    fetch(API_URL + 'product/create', {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ photo, url, name, price, description, photos, ce_id: localStorage.getItem('ce_id') || '' })
+      body: JSON.stringify({ photo, original_url, url, name, price, description, photos, color, size, ce_id: localStorage.getItem('ce_id') || '' })
     });
   };
 
   global.popupBtnClicked = (attr, target) => {
-    copyFromTemp(global);
+    if(!global.showConfirm) copyFromTemp(global);
     if (attr === 'gs__close') {
       toggle(global);
       global.sendClose();
@@ -1174,6 +1195,20 @@ const init = global => {
         toggle(global);
         global.sendClose();
       }, 5000);
+      return;
+    }
+    if (attr === 'gs__color') {
+      document.querySelector('[tag=gs__color]').click();
+      return;
+    }
+    if (attr === 'gs__togglecolor') {
+      global.productInfo.chooseColor = !global.productInfo.chooseColor;
+      showConfirm(global);
+      return;
+    }
+    if (attr === 'gs__togglesize') {
+      global.productInfo.chooseSize = !global.productInfo.chooseSize;
+      showConfirm(global);
       return;
     }
     if (attr === 'gs__manual') {
@@ -1273,6 +1308,7 @@ const init = global => {
     if (tag === 'gs__text' || !target) {
       global.productInfo[target] = e.target.value;
       global.tempInfo[target] = e.target.value;
+      console.log(global.productInfo);
     }
   };
 

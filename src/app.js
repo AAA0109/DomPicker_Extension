@@ -4,9 +4,9 @@ import { addStyle } from "./addStyle";
 import { findHref, getProductInfo, getProductInfoIndividual } from "./scrap";
 import { initMessage, showMessage, showConfirm, showTooltip, hideMessage, hideConfirm, hideTooltip } from "./info";
 
-const API_URL = 'https://ollacart.herokuapp.com/api/'
+// const API_URL = 'https://www.ollacart.com/api/'
+const API_URL = 'https://ollacart-dev.herokuapp.com/api/'
 // const API_URL2 = 'http://localhost:5000/api/'
-const API_URL2 = 'https://ollacart-dev.herokuapp.com/api/'
 
 const clearClass = (cl) => {
   const itms = document.getElementsByClassName(cl);
@@ -89,29 +89,23 @@ export const init = global => {
     const { name, price, description, photos } = productInfo;
     const photo = productInfo.img;
     const url = productInfo.url || findHref(productInfo.elements.e_img) || findHref(productInfo.elements.e_name) || location.href;
+    const original_url = location.href;
+    const color = productInfo.chooseColor ? productInfo.color : '';
+    const size = productInfo.chooseSize ? productInfo.size : '';
     // console.log('url', url);
     
-    // fetch(API_URL + 'extension/create', {
-    //   method: 'POST',
-    //   headers: {
-    //     'Accept': 'application/json',
-    //     'Content-Type': 'application/json'
-    //   },
-    //   body: JSON.stringify({ photo, url, name })
-    // });
-    
-    fetch(API_URL2 + 'product/create', {
+    fetch(API_URL + 'product/create', {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ photo, url, name, price, description, photos, ce_id: localStorage.getItem('ce_id') || '' })
+      body: JSON.stringify({ photo, original_url, url, name, price, description, photos, color, size, ce_id: localStorage.getItem('ce_id') || '' })
     });
   }
 
   global.popupBtnClicked = (attr, target) => {
-    copyFromTemp(global);
+    if(!global.showConfirm) copyFromTemp(global);
     if (attr === 'gs__close') {
       toggle(global);
       global.sendClose();
@@ -131,6 +125,20 @@ export const init = global => {
         toggle(global);
         global.sendClose();
       }, 5000);
+      return;
+    }
+    if (attr === 'gs__color') {
+      document.querySelector('[tag=gs__color]').click();
+      return;
+    }
+    if (attr === 'gs__togglecolor') {
+      global.productInfo.chooseColor = !global.productInfo.chooseColor;
+      showConfirm(global);
+      return;
+    }
+    if (attr === 'gs__togglesize') {
+      global.productInfo.chooseSize = !global.productInfo.chooseSize;
+      showConfirm(global);
       return;
     }
     if (attr === 'gs__manual') {
@@ -230,6 +238,7 @@ export const init = global => {
     if (tag === 'gs__text' || !target) {
       global.productInfo[target] = e.target.value;
       global.tempInfo[target] = e.target.value;
+      console.log(global.productInfo)
     }
   }
 

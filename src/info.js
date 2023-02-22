@@ -8,6 +8,7 @@ const STYLES = `
     color: black;
     box-sizing: border-box !important;
   }
+  .gs_hidden { visibility: hidden; }
   .gs_tooltip {
     position: fixed;
     z-index: 99999999999999;
@@ -264,6 +265,20 @@ const STYLES = `
     width: 20px;
   }
 
+  .gs_addtional_picker {
+    margin-top: 15px;
+    margin-left: auto;
+  }
+  .gs_addtional_picker>div {
+    margin-top: 5px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+  .gs_addtional_picker>div>* {
+    width: 70px;
+  }
+
   .gs_confirm_content::-webkit-scrollbar, .gs_message_content::-webkit-scrollbar {
     width: 7px;
   }
@@ -336,6 +351,16 @@ export const showConfirm = global => {
   let html = `<div class="gs_confirm"><div class="gs_close"><img tag="gs__close" src="https://i.postimg.cc/Wb3vQQxW/close-icon.png" alt="close"/></div><div class="gs_confirm_content">`
   html += `<div class="gs_ollacart_img"><img src="${info.img}" /><p class="gs_text_center gs_go_ollacart" tag="gs__goollacart">Go to  OllaCart</p></div>`;
   html += `<div class="gs_confirm_right"><div class="gs_name_price"><span>${info.name}</span><span class="gs_price">$${info.price || '0'}</span></div>`;
+  html += `<div class="gs_addtional_picker">
+            <div>
+              <div><input type="checkbox" ${info.chooseColor ? 'checked' : ''} tag="gs__togglecolor" /> Color</div>
+              <input class="${info.chooseColor ? '' : 'gs_hidden'}" type="color" tag="gs__text" target="color" gsallow="true" />
+            </div>
+            <div>
+              <div><input type="checkbox" ${info.chooseSize ? 'checked' : ''} tag="gs__togglesize" /> Size</div>
+              <input class="${info.chooseSize ? '' : 'gs_hidden'}" type="text" tag="gs__text" target="size" />
+            </div>
+          </div>`;
   if (info.description) html += `<div class="gs_description">${info.description}</div>`
   for (let i = 0; info.photos && (i < info.photos.length); i ++ ) {
     if (i === 0) html += `<div class="gs_addtional_photos">`
