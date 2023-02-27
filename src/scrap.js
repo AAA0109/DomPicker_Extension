@@ -354,6 +354,7 @@ export const getProductInfo = (el, picker) => {
   return {
     name,
     img,
+    color: img,
     url,
     description,
     price,
@@ -374,10 +375,12 @@ export const getProductInfoIndividual = (el, picker, global) => {
 
   switch(global.selectMode) {
     case 'img':
-      const e_img = getManualImgUrl(el, { x: picker.mouseX, y: picker.mouseY });
-      const img = getSrcFromImgTag(e_img);
-      productInfo.elements.e_img = e_img;
-      productInfo.img = img;
+      productInfo.elements.e_img = getManualImgUrl(el, { x: picker.mouseX, y: picker.mouseY });
+      productInfo.img = getSrcFromImgTag(productInfo.elements.e_img);
+      break;
+    case 'color':
+      productInfo.elements.e_color = getManualImgUrl(el, { x: picker.mouseX, y: picker.mouseY });
+      productInfo.color = getSrcFromImgTag(productInfo.elements.e_color);
       break;
     case 'name':
       productInfo.elements.e_name = el;

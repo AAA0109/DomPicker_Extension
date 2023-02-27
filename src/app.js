@@ -2,7 +2,7 @@ import debounce from "lodash/debounce";
 import { ElementPicker } from "./dom-pick";
 import { addStyle } from "./addStyle";
 import { findHref, getProductInfo, getProductInfoIndividual } from "./scrap";
-import { initMessage, showMessage, showConfirm, showTooltip, hideMessage, hideConfirm, hideTooltip } from "./info";
+import { initMessage, showMessage, showColorModal, showConfirm, showTooltip, hideMessage, hideColorModal, hideConfirm, hideTooltip } from "./info";
 
 // const API_URL = 'https://www.ollacart.com/api/'
 const API_URL = 'https://ollacart-dev.herokuapp.com/api/'
@@ -39,7 +39,8 @@ const copyFromTemp = (global) => {
     ...global.tempInfo,
     temp_photo: ''
   }
-  showMessage(global);
+  if (global.selectMode === 'color') showColorModal(global);
+  else showMessage(global);
 }
 
 export const toggle = global => {
@@ -90,7 +91,6 @@ export const init = global => {
     const photo = productInfo.img;
     const url = productInfo.url || findHref(productInfo.elements.e_img) || findHref(productInfo.elements.e_name) || location.href;
     const original_url = location.href;
-    const color = productInfo.chooseColor ? productInfo.color : '';
     const size = productInfo.chooseSize ? productInfo.size : '';
     // console.log('url', url);
     
@@ -100,7 +100,7 @@ export const init = global => {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ photo, original_url, url, name, price, description, photos, color, size, ce_id: localStorage.getItem('ce_id') || '' })
+      body: JSON.stringify({ photo, original_url, url, name, price, description, photos, size, ce_id: localStorage.getItem('ce_id') || '' })
     });
   }
 
@@ -128,7 +128,10 @@ export const init = global => {
       return;
     }
     if (attr === 'gs__color') {
-      document.querySelector('[tag=gs__color]').click();
+      copyToTemp(global);
+      hideConfirm(global);
+      global.selectMode = 'color';
+      showColorModal(global);
       return;
     }
     if (attr === 'gs__togglecolor') {
@@ -142,6 +145,7 @@ export const init = global => {
       return;
     }
     if (attr === 'gs__manual') {
+      copyToTemp(global);
       hideConfirm(global);
       global.selectMode = 'img';
       showMessage(global);
@@ -186,7 +190,7 @@ export const init = global => {
     if (!el) return;
     if (el.tagName.toLocaleLowerCase() === 'html') return;
     if (global.finish || !global.popup || global.confirm.contains(el)) return;
-    if (global.popup.contains(el)) {
+    if (global.popup.contains(el) || global.colormodal.contains(el)) {
       if(global.selectMode !== 'photos') copyFromTemp(global);
       return;
     }
@@ -196,14 +200,15 @@ export const init = global => {
     } else {
       getProductInfoIndividual(el, global.picker, global);
     }
-    showMessage(global);
+    if (global.selectMode === 'color') showColorModal(global);
+    else showMessage(global);
   }
   
   global.domPick = (el) => {
     if (!el) return ;
     if (el.tagName.toLocaleLowerCase() === 'html') return;
     if (!global.popup) return;
-    if (global.popup.contains(el) || global.confirm.contains(el)) {
+    if (global.popup.contains(el) || global.confirm.contains(el) || global.colormodal.contains(el)) {
       const attr = el.getAttribute('tag')
       const target = el.getAttribute('target') || '';
       if (attr && attr !== 'gs__text')
@@ -216,6 +221,11 @@ export const init = global => {
     addClass(global.productInfo.elements, 'gs_copied')
     
     if (global.selectMode) {
+      if (global.selectMode === 'color') {
+        copyToTemp(global);
+        showColorModal(global);
+        return;
+      }
       let idx = global.items.indexOf(global.selectMode) + 1;
       if (global.selectMode === 'photos') {
         global.productInfo.elements['photo' + global.productInfo.photos.length] = global.productInfo.elements['temp_photo'];

@@ -607,6 +607,7 @@ const getProductInfo = (el, picker) => {
   return {
     name,
     img,
+    color: img,
     url,
     description,
     price,
@@ -627,10 +628,12 @@ const getProductInfoIndividual = (el, picker, global) => {
 
   switch(global.selectMode) {
     case 'img':
-      const e_img = getManualImgUrl(el, { x: picker.mouseX, y: picker.mouseY });
-      const img = getSrcFromImgTag(e_img);
-      productInfo.elements.e_img = e_img;
-      productInfo.img = img;
+      productInfo.elements.e_img = getManualImgUrl(el, { x: picker.mouseX, y: picker.mouseY });
+      productInfo.img = getSrcFromImgTag(productInfo.elements.e_img);
+      break;
+    case 'color':
+      productInfo.elements.e_color = getManualImgUrl(el, { x: picker.mouseX, y: picker.mouseY });
+      productInfo.color = getSrcFromImgTag(productInfo.elements.e_color);
       break;
     case 'name':
       productInfo.elements.e_name = el;
@@ -660,8 +663,20 @@ const STYLES = `
   .gs_confirm_container *, .gs_message *, .gs_tooltip * {
     color: black;
     box-sizing: border-box !important;
+    font-size: 16px;
+    appearance: unset;
+    position: unset;
+    margin: unset;
+    width: unset;
+    height: unset;
+    opacity: unset;
+    visibility: unset;
+  }
+  .gs_confirm_container input, .gs_message input {
+    border: 1px solid black !important;
   }
   .gs_hidden { visibility: hidden; }
+  .gs_d-none { display: none !important; }
   .gs_tooltip {
     position: fixed;
     z-index: 99999999999999;
@@ -923,13 +938,26 @@ const STYLES = `
     margin-left: auto;
   }
   .gs_addtional_picker>div {
+    width: 200px;
     margin-top: 5px;
     display: flex;
     align-items: center;
-    gap: 15px;
+    justify-content: space-between;
   }
-  .gs_addtional_picker>div>* {
+  .gs_addtional_picker>div>*:nth-child(2) {
     width: 70px;
+  }
+  .gs_addtional_picker .gs_color-img {
+    aspect-ratio: 1;
+    text-align: center;
+    border: 1px solid orangered;
+    object-fit: contain;
+    padding: 4px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .gs_addtional_picker .gs_color-img:hover {
+    opacity: 0.8;
   }
 
   .gs_confirm_content::-webkit-scrollbar, .gs_message_content::-webkit-scrollbar {
@@ -996,8 +1024,29 @@ const showMessage = (global) => {
   global.popup.classList.toggle("gs_show", true);
 };
 
+const showColorModal = (global) => {
+  const info = global.productInfo;
+  let html = '<div class="gs_message_content">';
+  html += `<div class="gs_ollacart_img"><img src="${info.color}" /></div>`;
+
+  if (global.selectMode) {
+    html += `<div class="gs_manual_select_tools">
+        <span></span>
+        <div class="gs_btn" tag="gs__finish">Finish</div>
+        <span></span>
+      </div>`;
+  }
+  html += `</div>`;
+  
+  html += `<div class="gs_message_over">Specify Color</div>`;
+  
+  global.colormodal.innerHTML = html;
+  global.colormodal.classList.toggle("gs_show", true);
+};
+
 const showConfirm = global => {
   hideMessage(global);
+  hideColorModal(global);
   hideTooltip(global);
 
   const info = global.productInfo;
@@ -1006,13 +1055,13 @@ const showConfirm = global => {
   html += `<div class="gs_confirm_right"><div class="gs_name_price"><span>${info.name}</span><span class="gs_price">$${info.price || '0'}</span></div>`;
   html += `<div class="gs_addtional_picker">
             <div>
+              <div><input type="checkbox" ${info.chooseSize ? 'checked' : ''} tag="gs__togglesize" /> Size notes</div>
+              <input class="${info.chooseSize ? '' : 'gs_d-none'}" type="text" value="${info.size || ''}" tag="gs__text" target="size" />
+            </div>
+            <!-- <div>
               <div><input type="checkbox" ${info.chooseColor ? 'checked' : ''} tag="gs__togglecolor" /> Color</div>
-              <input class="${info.chooseColor ? '' : 'gs_hidden'}" type="color" tag="gs__text" target="color" gsallow="true" />
-            </div>
-            <div>
-              <div><input type="checkbox" ${info.chooseSize ? 'checked' : ''} tag="gs__togglesize" /> Size</div>
-              <input class="${info.chooseSize ? '' : 'gs_hidden'}" type="text" tag="gs__text" target="size" />
-            </div>
+              <img class="gs_color-img ${info.chooseColor ? '' : 'gs_d-none'}" src="${info.color}" alt="Specify Color" tag="gs__color" />
+            </div> -->
           </div>`;
   if (info.description) html += `<div class="gs_description">${info.description}</div>`;
   for (let i = 0; info.photos && (i < info.photos.length); i ++ ) {
@@ -1053,6 +1102,10 @@ const hideMessage = global => {
   global.popup.classList.toggle("gs_show", false);
 };
 
+const hideColorModal = global => {
+  global.colormodal.classList.toggle("gs_show", false);
+};
+
 const hideConfirm = global => {
   global.confirm.classList.toggle("gs_show", false);
   global.showConfirm = false;
@@ -1063,6 +1116,10 @@ const initMessage = global => {
   global.popup = document.createElement("div");
   global.popup.className = "gs_message";
   document.body.appendChild(global.popup);
+
+  global.colormodal = document.createElement("div");
+  global.colormodal.className = "gs_message";
+  document.body.appendChild(global.colormodal);
 
   global.confirm = document.createElement("div");
   global.confirm.className = "gs_confirm_container";
@@ -1109,7 +1166,8 @@ const copyFromTemp = (global) => {
     ...global.tempInfo,
     temp_photo: ''
   };
-  showMessage(global);
+  if (global.selectMode === 'color') showColorModal(global);
+  else showMessage(global);
 };
 
 const toggle = global => {
@@ -1160,7 +1218,6 @@ const init = global => {
     const photo = productInfo.img;
     const url = productInfo.url || findHref(productInfo.elements.e_img) || findHref(productInfo.elements.e_name) || location.href;
     const original_url = location.href;
-    const color = productInfo.chooseColor ? productInfo.color : '';
     const size = productInfo.chooseSize ? productInfo.size : '';
     // console.log('url', url);
     
@@ -1170,7 +1227,7 @@ const init = global => {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ photo, original_url, url, name, price, description, photos, color, size, ce_id: localStorage.getItem('ce_id') || '' })
+      body: JSON.stringify({ photo, original_url, url, name, price, description, photos, size, ce_id: localStorage.getItem('ce_id') || '' })
     });
   };
 
@@ -1198,7 +1255,10 @@ const init = global => {
       return;
     }
     if (attr === 'gs__color') {
-      document.querySelector('[tag=gs__color]').click();
+      copyToTemp(global);
+      hideConfirm(global);
+      global.selectMode = 'color';
+      showColorModal(global);
       return;
     }
     if (attr === 'gs__togglecolor') {
@@ -1212,6 +1272,7 @@ const init = global => {
       return;
     }
     if (attr === 'gs__manual') {
+      copyToTemp(global);
       hideConfirm(global);
       global.selectMode = 'img';
       showMessage(global);
@@ -1256,7 +1317,7 @@ const init = global => {
     if (!el) return;
     if (el.tagName.toLocaleLowerCase() === 'html') return;
     if (global.finish || !global.popup || global.confirm.contains(el)) return;
-    if (global.popup.contains(el)) {
+    if (global.popup.contains(el) || global.colormodal.contains(el)) {
       if(global.selectMode !== 'photos') copyFromTemp(global);
       return;
     }
@@ -1266,14 +1327,15 @@ const init = global => {
     } else {
       getProductInfoIndividual(el, global.picker, global);
     }
-    showMessage(global);
+    if (global.selectMode === 'color') showColorModal(global);
+    else showMessage(global);
   };
   
   global.domPick = (el) => {
     if (!el) return ;
     if (el.tagName.toLocaleLowerCase() === 'html') return;
     if (!global.popup) return;
-    if (global.popup.contains(el) || global.confirm.contains(el)) {
+    if (global.popup.contains(el) || global.confirm.contains(el) || global.colormodal.contains(el)) {
       const attr = el.getAttribute('tag');
       const target = el.getAttribute('target') || '';
       if (attr && attr !== 'gs__text')
@@ -1286,6 +1348,11 @@ const init = global => {
     addClass(global.productInfo.elements, 'gs_copied');
     
     if (global.selectMode) {
+      if (global.selectMode === 'color') {
+        copyToTemp(global);
+        showColorModal(global);
+        return;
+      }
       let idx = global.items.indexOf(global.selectMode) + 1;
       if (global.selectMode === 'photos') {
         global.productInfo.elements['photo' + global.productInfo.photos.length] = global.productInfo.elements['temp_photo'];
