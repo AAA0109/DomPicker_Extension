@@ -445,7 +445,7 @@ const getFText = el => {
 
 const getEnteredText = el => {
   if (!el) return '';
-  return (el.innerText || el.textContent || '').replace(/\n\n/g, '\n').replace(/\n/g, '\n• ');
+  return (el.innerText || el.textContent || '').replace(/\n\n/g, '\n').replace(/\n/g, '\n'); //•
 };
 
 const checkIfBetterTitle = (a, b, p) => {
@@ -661,16 +661,18 @@ const STYLES = `
     box-sizing: border-box !important;
   }
   .gs_confirm_container *, .gs_message *, .gs_tooltip * {
-    color: black;
+    color: black !important;
     box-sizing: border-box !important;
-    font-size: 16px;
-    appearance: unset;
-    position: unset;
-    margin: unset;
-    width: unset;
-    height: unset;
-    opacity: unset;
-    visibility: unset;
+    font-size: 16px !important;
+    appearance: unset !important;
+    position: unset !important;
+    margin: unset !important;
+    opacity: unset !important;
+    visibility: unset !important;
+  }
+  .gs_confirm_container input[type=checkbox] {
+    width: 13px !important;
+    height: 13px !important;
   }
   .gs_confirm_container input, .gs_message input {
     border: 1px solid black !important;
@@ -678,299 +680,309 @@ const STYLES = `
   .gs_hidden { visibility: hidden; }
   .gs_d-none { display: none !important; }
   .gs_tooltip {
-    position: fixed;
-    z-index: 99999999999999;
-    max-width: 500px;
-    width: 80%;
-    pointer-events: none;
-    display: none;
+    position: fixed !important;
+    z-index: 99999999999999 !important;
+    max-width: 500px !important;
+    width: 80% !important;
+    pointer-events: none !important;
+    display: none !important;
     
-    background-color: #ffa778;
-    padding: 5px 10px;
-    box-shadow: 1px 1px 5px 2px #260101;
-    line-height: 16px;
-    font-size: 16px;
-    color: black;
+    background-color: #ffa778 !important;
+    padding: 5px 10px !important;
+    box-shadow: 1px 1px 5px 2px #260101 !important;
+    line-height: 16px !important;
+    font-size: 16px !important;
+    color: black !important;
+  }
+  .gs_checkbox {
+    width: 18px !important;
+    height: 18px !important;
+    cursor: pointer !important;
   }
   .gs_tooltip.gs_show {
-    display: block;
+    display: block !important;
   }
   .gs_confirm_container {
-    position: fixed;
-    left: 0;
-    top: 0;
-    width: 100vw;
-    height: 100vh;
-    background-color: #ff450040;
-    z-index: 9999999999999;
-    display: none;
+    position: fixed !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background-color: #ff450040 !important;
+    z-index: 9999999999999 !important;
+    display: none !important;
   }
   .gs_confirm_container.gs_hide {
-    opacity: 0;
-    transition: opacity 2s;
-    transition-delay: 4s;
+    opacity: 0 !important;
+    transition: opacity 2s !important;
+    transition-delay: 4s !important;
   }
   .gs_message, .gs_confirm {
-    position: fixed;
-    box-shadow: 0 2px 3px 0 rgba(0, 0, 0, 0.25);
-    padding: 30px 10px 8px;
+    position: fixed !important;
+    box-shadow: 0 2px 3px 0 rgba(0, 0, 0, 0.25) !important;
+    padding: 30px 10px 8px !important;
     background-color: #fff !important;
-    border: 4px solid #eee;
+    border: 4px solid #eee !important;
   }
   .gs_confirm {
-    left: calc(50vw - 350px);
-    top: 80px;
+    left: calc(50vw - 350px) !important;
+    top: 80px !important;
   }
   .gs_hide .gs_confirm {
-    display: none;
+    display: none !important;
   }
   .gs_confirm_content {
-    width: 730px;
-    max-width: 100%;
-    max-height: calc(100vh - 150px);
-    overflow-y: auto;
-    display: flex;
-    gap: 20px;
-    flex-wrap: wrap;
-    align-items: flex-start;
+    width: 730px !important;
+    max-width: 100% !important;
+    max-height: calc(100vh - 150px) !important;
+    overflow-y: auto !important;
+    display: flex !important;
+    gap: 20px !important;
+    flex-wrap: wrap !important;
+    align-items: flex-start !important;
   }
   @media screen and (max-width: 768px) {
     .gs_confirm {
-      width: 290px;
-      left: calc(50vw - 150px);
+      width: 290px !important;
+      left: calc(50vw - 150px) !important;
     }
   }
   .gs_message {
-    display: none;
-    left: 10px;
-    bottom: 10px;
-    z-index: 999999999999;
-    width: 300px;
+    display: none !important;
+    left: 10px !important;
+    bottom: 10px !important;
+    z-index: 999999999999 !important;
+    width: 300px !important;
   }
   .gs_message_content {
-    display: flex;
-    max-height: calc(100vh - 100px);
-    overflow-y: auto;
-    min-height: 250px;
-    flex-direction: column;
+    display: flex !important;
+    max-height: calc(100vh - 100px) !important;
+    overflow-y: auto !important;
+    min-height: 250px !important;
+    flex-direction: column !important;
   }
 
   .gs_confirm_container.gs_show, .gs_message.gs_show {
-    display: inline-block;
+    display: inline-block !important;
   }
   .gs_ollacart_img img {
-    width: 100%;
+    width: 100% !important;
   }
   .gs_confirm .gs_ollacart_img {
-    width: 350px;
+    width: 350px !important;
     /* position: sticky; */
     /* top: 0; */
   }
   .gs_name_price {
-    display: flex;
-    justify-content: space-between;
-    font-size: 16px;
-    color: black;
-    gap: 10px;
+    display: flex !important;
+    justify-content: space-between !important;
+    font-size: 16px !important;
+    color: black !important;
+    gap: 10px !important;
   }
   .gs_confirm .gs_name_price {
-    font-size: 20px;
-    font-weight: bold;
-    color: #303030;
+    font-size: 20px !important;
+    font-weight: bold !important;
+    color: #303030 !important;
   }
   .gs_confirm .gs_price {
-    color: #004400;
+    color: #004400 !important;
   }
   .gs_description {
-    font-size: 14px;
-    margin-top: 10px;
-    white-space: break-spaces;
+    font-size: 14px !important;
+    margin-top: 10px !important;
+    white-space: break-spaces !important;
   }
   .gs_message_over, .gs_message_finish {
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: -20px;
-    background-color: orangered;
-    color: white;
-    text-align: center;
-    padding: 8px 0;
-    font-size: 20px;
-    font-weight: bold;
-    white-space: nowrap;
-    cursor: pointer;
+    position: absolute !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: -20px !important;
+    background-color: orangered !important;
+    color: white !important;
+    text-align: center !important;
+    padding: 8px 0 !important;
+    font-size: 20px !important;
+    font-weight: bold !important;
+    white-space: nowrap !important;
+    cursor: pointer !important;
   }
   .gs_message_mask {
-    position: absolute;
-    left: -4px;
-    right: -4px;
-    top: -4px;
-    bottom: -4px;
-    background-color: #ff450040;
+    position: absolute !important;
+    left: -4px !important;
+    right: -4px !important;
+    top: -4px !important;
+    bottom: -4px !important;
+    background-color: #ff450040 !important;
   }
   .gs_message_finish {
-    font-size: 30px;
-    top: calc(50% - 100px);
-    padding: 50px 0;
+    font-size: 30px !important;
+    top: calc(50% - 100px) !important;
+    padding: 50px 0 !important;
   }
   .gs_addtional_photos {
-    margin-top: 5px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
+    margin-top: 5px !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
   }
   .gs_addtional_photos>div {
-    position: relative;
-    width: 46px;
-    height: 60px;
-    overflow: hidden;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border: 1px solid blue;
+    position: relative !important;
+    width: 46px !important;
+    height: 60px !important;
+    overflow: hidden !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    border: 1px solid blue !important;
   }
   .gs_addtional_photos .gs_remove_photo {
-    transform: translateY(100%);
-    opacity: 0;
-    transition: all .3s;
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    background-color: #000000A0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    transform: translateY(100%) !important;
+    opacity: 0 !important;
+    transition: all .3s !important;
+    position: absolute !important;
+    width: 100% !important;
+    height: 100% !important;
+    background-color: #000000A0 !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
   }
   .gs_addtional_photos>div:hover .gs_remove_photo {
-    transform: translateY(0);
-    opacity: 1;
+    transform: translateY(0) !important;
+    opacity: 1 !important;
   }
   .gs_addtional_photos .gs_remove_photo .gs_remove_btn {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    cursor: pointer;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 30px;
-    font-weight: bold;
-    background-color: rgb(200, 200, 200);
-    color: black;
+    width: 30px !important;
+    height: 30px !important;
+    border-radius: 50% !important;
+    cursor: pointer !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    font-size: 30px !important;
+    font-weight: bold !important;
+    background-color: rgb(200, 200, 200) !important;
+    color: black !important;
   }
   .gs_addtional_photos img {
-    width: 100%;
+    width: 100% !important;
   }
 
   .gs_manual_select_tools {
-    flex-grow: 1;
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    margin-top: 10px;
+    flex-grow: 1 !important;
+    display: flex !important;
+    align-items: flex-end !important;
+    justify-content: space-between !important;
+    margin-top: 10px !important;
   }
   .gs_confirm_tools {
-    display: flex;
-    gap: 15px;
-    justify-content: flex-end;
-    align-items: flex-end;
-    flex-grow: 1;
-    margin-top: 10px;
+    display: flex !important;
+    gap: 15px !important;
+    justify-content: flex-end !important;
+    align-items: flex-end !important;
+    flex-grow: 1 !important;
+    margin-top: 10px !important;
   }
   .gs_btn {
-    padding: 4px 10px;
-    background-color: orangered;
-    color: white;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-    border-radius: 7px;
+    padding: 4px 10px !important;
+    background-color: orangered !important;
+    color: white !important;
+    font-size: 16px !important;
+    font-weight: bold !important;
+    cursor: pointer !important;
+    border-radius: 7px !important;
   }
   .gs_btn:hover {
-    opacity: 0.8;
+    opacity: 0.8 !important;
   }
   .gs_btn:active {
-    opacity: 0.7;
+    opacity: 0.7 !important;
   }
   .gs_btn.gs_direct {
-    padding: 4px 14px;
+    padding: 4px 14px !important;
   }
 
   .gs_confirm_right {
-    display: flex;
-    flex-direction: column;
-    flex-grow: 1;
-    width: 1px;
+    display: flex !important;
+    flex-direction: column !important;
+    flex-grow: 1 !important;
+    width: 1px !important;
   }
   .gs_text_center {
-    text-align: center;
+    text-align: center !important;
   }
   .gs_go_ollacart {
-    margin-top: 20px;
-    font-size: 20px;
-    line-height: 25px;
-    cursor: pointer;
-    color: lightseagreen;
+    margin-top: 20px !important;
+    font-size: 20px !important;
+    line-height: 25px !important;
+    cursor: pointer !important;
+    color: lightseagreen !important;
   }
   .gs_textarea {
-    width: 100%;
-    height: 300px;
-    min-height: 300px;
-    max-height: 300px;
-    font-size: 16px;
+    width: 100% !important;
+    height: 300px !important;
+    min-height: 300px !important;
+    max-height: 300px !important;
+    font-size: 16px !important;
   }
 
   .gs_close {
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    cursor: pointer;
+    position: absolute !important;
+    top: 5px !important;
+    right: 5px !important;
+    cursor: pointer !important;
   }
   .gs_close:hover {
-    opacity: 0.8;
+    opacity: 0.8 !important;
   }
   .gs_close img {
-    width: 20px;
+    width: 20px !important;
   }
 
   .gs_addtional_picker {
-    margin-top: 15px;
-    margin-left: auto;
+    margin-top: 15px !important;
+    margin-left: auto !important;
   }
   .gs_addtional_picker>div {
-    width: 200px;
-    margin-top: 5px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    width: 200px !important;
+    margin-top: 5px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
+  .gs_addtional_picker>div>div {
+    display: flex !important;
+    align-items: center !important;
+    gap: 5px !important;
   }
   .gs_addtional_picker>div>*:nth-child(2) {
-    width: 70px;
+    width: 70px !important;
   }
   .gs_addtional_picker .gs_color-img {
-    aspect-ratio: 1;
-    text-align: center;
-    border: 1px solid orangered;
-    object-fit: contain;
-    padding: 4px;
-    border-radius: 8px;
-    cursor: pointer;
+    aspect-ratio: 1 !important;
+    text-align: center !important;
+    border: 1px solid orangered !important;
+    object-fit: contain !important;
+    padding: 4px !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
   }
   .gs_addtional_picker .gs_color-img:hover {
-    opacity: 0.8;
+    opacity: 0.8 !important;
   }
 
   .gs_confirm_content::-webkit-scrollbar, .gs_message_content::-webkit-scrollbar {
-    width: 7px;
+    width: 7px !important;
   }
   .gs_confirm_content::-webkit-scrollbar-track, .gs_message_content::-webkit-scrollbar-track {
-    background: #f1f1f1; 
+    background: #f1f1f1 !important;
   }
   .gs_confirm_content::-webkit-scrollbar-thumb, .gs_message_content::-webkit-scrollbar-thumb {
-    background: #e19b9b; 
+    background: #e19b9b !important;
   }
   .gs_confirm_content::-webkit-scrollbar-thumb:hover, .gs_message_content::-webkit-scrollbar-thumb:hover {
-    background: #e19b9bd0; 
+    background: #e19b9bd0 !important;
   }
 `;
 
@@ -1055,7 +1067,7 @@ const showConfirm = global => {
   html += `<div class="gs_confirm_right"><div class="gs_name_price"><span>${info.name}</span><span class="gs_price">$${info.price || '0'}</span></div>`;
   html += `<div class="gs_addtional_picker">
             <div>
-              <div><input type="checkbox" ${info.chooseSize ? 'checked' : ''} tag="gs__togglesize" /> Size notes</div>
+              <div><img class="gs_checkbox" src="${info.chooseSize ? 'https://i.postimg.cc/25cTL5v5/checkbox-checked.png' : 'https://i.postimg.cc/sDkc58vp/checkbox-blank.png'}" alt="c" tag="gs__togglesize" /> Size notes</div>
               <input class="${info.chooseSize ? '' : 'gs_d-none'}" type="text" value="${info.size || ''}" tag="gs__text" target="size" />
             </div>
             <!-- <div>

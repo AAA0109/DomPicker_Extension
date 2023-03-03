@@ -192,7 +192,7 @@ const getFText = el => {
 
 const getEnteredText = el => {
   if (!el) return '';
-  return (el.innerText || el.textContent || '').replace(/\n\n/g, '\n').replace(/\n/g, '\n• ');
+  return (el.innerText || el.textContent || '').replace(/\n\n/g, '\n').replace(/\n/g, '\n'); //•
 }
 
 const checkIfBetterTitle = (a, b, p) => {
