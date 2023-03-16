@@ -205,6 +205,7 @@ export const init = global => {
   }
   
   global.domPick = (el) => {
+    console.log('FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF', el);
     if (!el) return ;
     if (el.tagName.toLocaleLowerCase() === 'html') return;
     if (!global.popup) return;

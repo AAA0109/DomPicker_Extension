@@ -93,7 +93,7 @@ const getProductRootElement = el => {
   if (check_list) return check_list;
   if (checkIfSimilarProductContainer(el, [Constant.title])) return el;
   let p = el.parentNode;
-  while (p && p.tagName.toLocaleLowerCase() !== 'body') {
+  while (p && p.tagName.toLocaleLowerCase() !== 'html') {
     if (checkIfSimilarProductContainer(p, [Constant.title])) return p;
     p = p.parentNode;
   }
@@ -247,7 +247,7 @@ const checkIfBetterDescription = (a, b, p) => {
 
 export const findHref = el => {
   var p = el;
-  while(p && p.tagName.toLocaleLowerCase() !== 'body') {
+  while(p && p.tagName.toLocaleLowerCase() !== 'html') {
     if ((p.tagName.toLocaleLowerCase() === 'a' || p.tagName.toLocaleLowerCase === 'button') && p.href) return p.href;
     p = p.parentNode;
   }
@@ -268,7 +268,7 @@ const getImgUrl = (el, mouse, excepts = []) => {
 }
 
 const getManualImgUrl = (el, mouse) => {
-  while(el.tagName !== 'body') {
+  while(el.tagName !== 'html') {
     const img = getImgUrl(el, mouse);
     if (img) return img;
     el = el.parentNode;
